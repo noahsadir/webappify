@@ -4,13 +4,9 @@
 * Helper class which fetches data  *
 * from various souces and prepares *
 * it for processing.               *
-* -------------------------------- *
-* PACKAGES USED                    *
-* =============                    *
-* - Options                        *
 * -------------------------------- */
 
-import {OPTIONS_REQUEST_LISTENER} from './App';
+import {REQUEST_LISTENER} from './App';
 var testMode = false;
 
 /*        pain         */

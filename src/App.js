@@ -100,12 +100,15 @@ export default class App extends React.Component {
         });
       }
     }
+
     const handleGenerateButtonClick = (event) => {
 
     }
+
     const handleRoundCornersSwitchChange = (event) => {
       this.setState({shouldRoundCorners: event.target.checked});
     }
+
     return (
       <div id="main-content" style={{display:"flex",backgroundColor: "#111115",height:"100%",width:"100%",position:"fixed",flexFlow:"column"}}>
         <div style={{flexGrow: (this.state.didContinueToGenerate ? 0 : 1),animation:(this.state.didContinueToGenerate ? "flexToZero 1s" : "")}}>
@@ -196,7 +199,7 @@ function waitUntilImageUploaded(callback){
   }, 500);
 }
 
-export function OPTIONS_REQUEST_LISTENER(type, success, data){
+export function REQUEST_LISTENER(type, success, data){
   console.log(type);
   console.log(success);
   console.log(data);
@@ -210,7 +213,7 @@ export function OPTIONS_REQUEST_LISTENER(type, success, data){
       if (data.apple_touch_icon_exists == true){
         imagePath = savedUrl + "/apple-touch-icon.png";
       }else{
-        imagePath = "https://www.noahsadir.io/webappify/src/api/resources/webappify_default.png";
+        imagePath = "../api/resources/webappify_default.png";
       }
       if (data.title != null){
         titleValue = data.title;
@@ -222,26 +225,9 @@ export function OPTIONS_REQUEST_LISTENER(type, success, data){
   }else if (type == "SAVE_IMAGE"){
     if (success){
       if (data.success == true){
-        imagePath = "api/tmp/" + uniqueID + ".png";
+        imagePath = "../api/tmp/" + uniqueID + ".png";
       }
     }
     didUploadImage = true;
-  }
-}
-
-class Centered extends React.Component {
-  constructor(props){
-    super(props);
-  }
-  render(){
-    var style = this.props.style == null ? {display: "flex"} : this.props.style;
-    style.display = "flex";
-    return (
-      <div style={style}>
-        <div style={{flexGrow: 1}}></div>
-        <div style={{flexGrow: 1}}>{this.props.children}</div>
-        <div style={{flexGrow: 1}}></div>
-      </div>
-    );
   }
 }
