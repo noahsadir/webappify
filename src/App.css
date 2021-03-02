@@ -1,0 +1,69 @@
+.App {
+  text-align: center;
+}
+.MuiOutlinedInput-root input{
+    color: #ffffff;
+    font-size: 24px !important;
+}
+.inline{
+  display: inline;
+}
+.cursor{
+  color: #ffffff !important;
+}
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+.largeScreenColumns{
+  flex-flow: row;
+}
+
+@media screen and (max-width: 768px){
+  .largeScreenColumns{
+    flex-flow: column;
+  }
+}
+
+@keyframes fadeToVisible {
+  from {opacity: 0;padding-top: 64px}
+  to {opacity: 1;padding-top: 0px}
+}
+
+@keyframes flexToFour {
+  from {flex-grow: 2;}
+  to {flex-grow: 4;}
+}
+@keyframes flexToZero {
+  from {flex-grow: 1;}
+  to {flex-grow: 0;}
+}
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
