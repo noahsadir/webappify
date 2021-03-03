@@ -156,7 +156,7 @@ export default class App extends React.Component {
         waitUntilGenerateFinished(() =>{
           this.setState({isCurrentlyFetching: false});
           if (didGenerateApp){
-            this.setState({showSnackbarMessage: true, snackbarMessage: generatedAppLink, snackbarSeverity: "success"});
+            //this.setState({showSnackbarMessage: true, snackbarMessage: generatedAppLink, snackbarSeverity: "success"});
           }else{
             this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
           }
@@ -184,15 +184,15 @@ export default class App extends React.Component {
         </div>
         <div style={{visibility: "hidden",height:0.01,display: (didGenerateApp ? "flex" : "none"),animation: (didGenerateApp ? "displayAndFadeToVisible 1s forwards 1.5s" : "")}}>
           <div style={{flexGrow: 1}}></div>
-          <Paper style={{flexGrow: 4,margin: 16,padding:8}}>
+          <Paper style={{flexGrow: 4,margin: 16,padding:8, color: "#ffffff"}}>
             <p style={{width:"100%",textAlign:"center",fontSize:20,fontWeight:500}}>Your web app was created successfully!</p>
             <div style={{width:"100%",display:"flex"}}>
               <div style={{flexGrow: 1}}></div>
-              <Button onClick={handleInstructionsButtonClick} variant="contained" color="primary" style={{flexGrow: 1, marginTop:16}}>How to Install</Button>
+              <Button onClick={handleInstructionsButtonClick} variant="contained" color="primary" style={{flexGrow: 1, marginTop:8, marginBottom: 8}}>How to Install</Button>
               <div style={{flexGrow: 1}}></div>
             </div>
             <p style={{width:"100%",textAlign:"center",fontSize:16}}>Alternatively, you can click or copy & paste the link below:</p>
-            <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none"}} target="_blank">{generatedAppLink}</a></p>
+            <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none",wordBreak:"break-all"}} target="_blank">{generatedAppLink}</a></p>
           </Paper>
           <div style={{flexGrow: 1}}></div>
         </div>
@@ -200,7 +200,7 @@ export default class App extends React.Component {
           <div style={{flexGrow: 1}}></div>
           <div style={{flexGrow: 2, paddingTop: (this.state.didFinishTypingAnimation ? 0 : 64),opacity: (didGenerateApp ? 1 : 0),animation: (this.state.didFinishTypingAnimation ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "fadeToVisible 1s forwards 0.5s") : "")}}>
             <MuiThemeProvider theme={darkTheme}>
-              <TextField onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
+              <TextField inputProps={{autoComplete:"off",type:"url"}} autoComplete="off" onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
               <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.state.didContinueToGenerate || this.state.isCurrentlyFetching ? "none" : "inline-flex")}}>
                 <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
               </IconButton>
@@ -215,7 +215,7 @@ export default class App extends React.Component {
             <Paper style={{display:"flex",flexGrow: 2,height:"fit-content",backgroundColor:"#222225 !important"}}>
               <div style={{flexGrow: 2,marginRight:16,display:"flex"}}>
                 <div style={{flexGrow: 1,width:0,height:"fit-content",marginRight:16}}>
-                  <img style={{borderRadius: (this.state.shouldRoundCorners ? "12.5%" : "0%"),float:"left",maxWidth:"100%"}} src={imagePath}/>
+                  <img style={{borderRadius: (this.state.shouldRoundCorners ? "20%" : "0%"),float:"left",maxWidth:"100%"}} src={imagePath}/>
                 </div>
               </div>
               <div style={{flexGrow: 2}}>
@@ -234,7 +234,7 @@ export default class App extends React.Component {
                     <Button variant="outlined" color="background" style={{width:"100%",marginTop:16}}>Custom Image<input onChange={handleCustomImageButtonClick} type="file" style={{position:"absolute",width:"100%",height:"100%",opacity:0}}/></Button>
                   </div>
                   <div style={{width:"100%"}}>
-                    <Button onClick={handleGenerateButtonClick} variant="contained" color="primary" style={{width:"100%",height:48,marginTop:8,marginBottom:8}}>Generate</Button>
+                    <Button onClick={handleGenerateButtonClick} variant="contained" color="primary" style={{width:"100%",height:48,marginTop:16}}>Generate</Button>
                   </div>
                 </MuiThemeProvider>
               </div>
