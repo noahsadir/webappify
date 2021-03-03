@@ -12,7 +12,9 @@ Turn any website into a Progressive Web App!
 - Install the required packages
 
   @material-ui/core
+
   @material-ui/lab
+  
   react-typing-animation
 
 - Copy src, public, api, apps directories from repository inside the react folder, replacing any existing files.
