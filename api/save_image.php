@@ -4,6 +4,10 @@ $id = $_POST['id'];
 if ($image && isset($id)){
   if (filesize($image) < 1024000){
     $pngImage = imagecreatefrompng($image);
+    //Icons should typically be a PNG, but there's no harm if it's a JPEG
+    if (!$pngImage){
+      $pngImage = imagecreatefromjpeg($image);
+    }
     if ($pngImage){
       if (imagepng($pngImage,'tmp/'.$id.'.png')){
         header('Content-Type: application/json');

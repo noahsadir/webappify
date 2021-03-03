@@ -9,6 +9,9 @@ if ($imgFromWebsite == "true"){
   $imgPath = $web_link."/apple-touch-icon.png";
 }
 $image = imagecreatefrompng($imgPath);
+if (!$image){
+  $image = imagecreatefromjpeg($imgPath);
+}
 
 if (isset($_GET["link"],$_GET["name"])){
   generateApp($unique_id, $web_link, $name, $image, $rounded);
@@ -60,7 +63,7 @@ function generateApp($unique_id,$web_link,$name,$image,$rounded){
     saveResized("../apps/".$unique_id."/main-icon-512.png",$image,512,512);
     saveResized("../apps/".$unique_id."/main-icon-192.png",$image,192,192);
 
-    $newLink = 'https://www.noahsadir.io/webappify/apps/'.$unique_id.'/index.html';
+    $newLink = 'https://www.noahsadir.io/webappify/apps/'.$unique_id;
     header('Content-Type: application/json');
     echo '{"success":true,"link":"'.$newLink.'"}';
     //echo '<div id="success"><p id="success_title">Success!</p><p>Click on the link below or copy & paste it into your browser.</p><a id="success_link" href="'.$newLink.'">'.$newLink.'</a></div>';
