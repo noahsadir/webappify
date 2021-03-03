@@ -1,31 +1,34 @@
-//material-ui
+//@material-ui/core
+//@material-ui/lab
 //react-typing-animation
 
 import React from "react";
 import logo from './logo.svg';
 import './App.css';
-import {Label} from "./obj/BasicElements";
-import TextField from "@material-ui/core/TextField";
-import InputBase from '@material-ui/core/InputBase';
+
+
 import { withStyles } from '@material-ui/core/styles';
-import { Button } from '@material-ui/core';
+import { Button, Snackbar, Dialog, DialogTitle, TextField, Paper, InputBase, FormGroup, FormControlLabel, Switch, IconButton, Icon, CircularProgress } from '@material-ui/core';
+import { Alert } from '@material-ui/lab';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Typing, {Cursor} from 'react-typing-animation';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
-import axios from "axios";
-import { indigo } from '@material-ui/core/colors/';
 import {JSON_RETRIEVE} from './Requests';
 
 const darkTheme = createMuiTheme({ palette: { type: "dark"} });
 
 var didFetchWebsiteData = false;
 var didUploadImage = false;
+var didGenerateApp = false;
+
+var didAttemptFetchWebsiteData = false;
+var didAttemptUploadImage = false;
+var didAttemptGenerateApp = false;
+
 var savedUrl = "";
 var imagePath = "https://www.noahsadir.io/webappify/src/api/resources/webappify_default.png";
 var titleValue = "Web App";
 var uniqueID = "null";
+var generatedAppLink = "";
 
 const StyledInputBase = withStyles((theme) => ({
   root:{
@@ -70,6 +73,11 @@ export default class App extends React.Component {
       didContinueToGenerate: false,
       didFinishTypingAnimation: false,
       shouldRoundCorners: true,
+      isCurrentlyFetching: false,
+      fetchMessage: "Loading",
+      showSnackbarMessage: false,
+      snackbarMessage: "Error",
+      snackbarSeverity: "error",
     }
   }
 
@@ -81,28 +89,63 @@ export default class App extends React.Component {
     const handleUrlTextFieldChange = (event) => {
       this.setState({urlTextField: event.target.value});
     }
+
     const handleTitleTextFieldChange = (event) => {
       this.setState({appTitle: event.target.value});
     }
+
     const handleGoButtonClick = (event) => {
       savedUrl = this.state.urlTextField;
+      this.setState({isCurrentlyFetching: true});
+      didAttemptFetchWebsiteData = false;
       JSON_RETRIEVE("UNIQUE_ID");
       waitUntilRequestFinished(() => {
-        this.setState({state: this.state,didContinueToGenerate: true,appTitle: titleValue});
+        this.setState({isCurrentlyFetching: false});
+        if (didFetchWebsiteData){
+          this.setState({state: this.state,didContinueToGenerate: true,appTitle: titleValue});
+        }else{
+          this.setState({showSnackbarMessage: true, snackbarMessage: "An unexpected error occurred.", snackbarSeverity: "error"});
+        }
       });
     }
+
     const handleCustomImageButtonClick = (event) => {
       if (event.target.files.length > 0){
+        didAttemptUploadImage = false;
         console.log("Found file " + event.target.files[0].value);
+        this.setState({isCurrentlyFetching: true,});
         JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: event.target.files[0]});
         waitUntilImageUploaded(() => {
-          this.setState({state: this.state});
+          this.setState({state: this.state, isCurrentlyFetching: false});
+          if (didUploadImage){
+            //success
+          }else{
+            this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
+          }
         });
       }
     }
 
     const handleGenerateButtonClick = (event) => {
+      this.setState({isCurrentlyFetching: true});
+      didAttemptGenerateApp = false;
+      JSON_RETRIEVE("GENERATE_APP",{
+        id: uniqueID,
+        link: savedUrl,
+        name: this.state.appTitle,
+        rounded: this.state.shouldRoundCorners ? "1" : "0",
+        siteimg: didUploadImage ? "false" : "true",
+      });
 
+      waitUntilGenerateFinished(() =>{
+        this.setState({isCurrentlyFetching: false});
+        if (didGenerateApp){
+          this.setState({showSnackbarMessage: true, snackbarMessage: generatedAppLink, snackbarSeverity: "success"});
+        }else{
+          this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
+        }
+
+      });
     }
 
     const handleRoundCornersSwitchChange = (event) => {
@@ -127,24 +170,21 @@ export default class App extends React.Component {
           <div style={{flexGrow: 2, paddingTop: (this.state.didFinishTypingAnimation ? 0 : 64),opacity: 0,animation: (this.state.didFinishTypingAnimation ? "fadeToVisible 1s forwards 0.5s" : "")}}>
             <MuiThemeProvider theme={darkTheme}>
               <TextField variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
+              <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.state.didContinueToGenerate || this.state.isCurrentlyFetching ? "none" : "inline-flex")}}>
+                <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
+              </IconButton>
+              <CircularProgress color="background" style={{flexGrow: 1,width:32,height:32,padding:16,marginLeft:-64,position:"absolute",display: ((!this.state.didContinueToGenerate && this.state.isCurrentlyFetching) ? "inline-flex" : "none")}}/>
             </MuiThemeProvider>
-            <div style={{display: "flex",marginTop:8}}>
-              <div style={{flexGrow: 1}}></div>
-              <MuiThemeProvider theme={darkTheme}>
-                <Button onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,maxWidth:128, display: (this.state.didContinueToGenerate ? "none" : "block")}}>Go</Button>
-              </MuiThemeProvider>
-            </div>
           </div>
           <div style={{flexGrow: 1}}></div>
         </div>
         <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.state.didContinueToGenerate ? "flexToFour 1s" : ""),flex: (this.state.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.state.didContinueToGenerate ? "visible" : "hidden")}}>
-          <p style={{color:"#ffffff",textAlign:"center",marginTop:0,marginBottom:32,fontSize:24,flexGrow: 1,maxHeight:32}}>Generate Web App</p>
           <div style={{display: "flex", flexGrow: 1}}>
             <div style={{flexGrow: 1}}></div>
-            <div style={{display:"flex",flexGrow: 1}}>
+            <Paper style={{display:"flex",flexGrow: 2,height:"fit-content",backgroundColor:"#222225 !important"}}>
               <div style={{flexGrow: 2,marginRight:16,display:"flex"}}>
-                <div style={{flexGrow: 1,width:0,height:0,marginRight:16}}>
-                  <img style={{borderRadius: (this.state.shouldRoundCorners ? "12.5%" : "0%"),float:"right",width:"100%",minWidth:64}} src={imagePath}/>
+                <div style={{flexGrow: 1,width:0,height:"fit-content",marginRight:16}}>
+                  <img style={{borderRadius: (this.state.shouldRoundCorners ? "12.5%" : "0%"),float:"left",maxWidth:"100%"}} src={imagePath}/>
                 </div>
               </div>
               <div style={{flexGrow: 2}}>
@@ -160,28 +200,51 @@ export default class App extends React.Component {
                     label={<span style={{color:"#ffffff"}}>Round corners</span>}>
                   </FormControlLabel>
                   <div style={{width:"100%"}}>
-                    <Button variant="outlined" color="background" style={{width:"100%",maxWidth:192,marginTop:16}}>Custom Image<input onChange={handleCustomImageButtonClick} type="file" style={{position:"absolute",width:"100%",height:"100%",opacity:0}}/></Button>
+                    <Button variant="outlined" color="background" style={{width:"100%",marginTop:16}}>Custom Image<input onChange={handleCustomImageButtonClick} type="file" style={{position:"absolute",width:"100%",height:"100%",opacity:0}}/></Button>
                   </div>
                   <div style={{width:"100%"}}>
                     <Button onClick={handleGenerateButtonClick} variant="contained" color="primary" style={{width:"100%",height:48,marginTop:16}}>Generate</Button>
                   </div>
                 </MuiThemeProvider>
               </div>
-            </div>
+            </Paper>
             <div style={{flexGrow: 1}}></div>
           </div>
-
         </div>
+        <Dialog aria-labelledby="simple-dialog-title" open={this.state.didContinueToGenerate && this.state.isCurrentlyFetching}>
+          <div style={{display:"flex"}}>
+            <DialogTitle style={{flex:"1 0 auto",color:"#ffffff"}} id="simple-dialog-title">{this.state.fetchMessage}</DialogTitle>
+            <CircularProgress style={{flex: "1 0 auto", padding: 16, width:32,height:32}}/>
+          </div>
+        </Dialog>
+        <MuiThemeProvider theme={darkTheme}>
+          <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'center' }}  open={this.state.showSnackbarMessage} autoHideDuration={60000} onClose={() => {this.setState({showSnackbarMessage: false})}}>
+            <Alert onClose={() => {this.setState({showSnackbarMessage: false})}} severity={this.state.snackbarSeverity}>
+              {this.state.snackbarMessage}
+            </Alert>
+          </Snackbar>
+        </MuiThemeProvider>
       </div>
     );
   }
 }
 
+class WebAppGenerator extends React.Component {
+
+}
+
+function waitUntilGenerateFinished(callback){
+  var requestTimeout = window.setInterval(() => {
+    if (didAttemptGenerateApp){
+      callback();
+      window.clearInterval(requestTimeout);
+    }
+  }, 500);
+}
+
 function waitUntilRequestFinished(callback){
   var requestTimeout = window.setInterval(() => {
-    console.log("loading...");
-    if (didFetchWebsiteData){
-      console.log("finished!");
+    if (didAttemptFetchWebsiteData){
       callback();
       window.clearInterval(requestTimeout);
     }
@@ -190,9 +253,7 @@ function waitUntilRequestFinished(callback){
 
 function waitUntilImageUploaded(callback){
   var requestTimeout = window.setInterval(() => {
-    console.log("loading...");
-    if (didUploadImage){
-      console.log("finished!");
+    if (didAttemptUploadImage){
       callback();
       window.clearInterval(requestTimeout);
     }
@@ -200,9 +261,9 @@ function waitUntilImageUploaded(callback){
 }
 
 export function REQUEST_LISTENER(type, success, data){
-  console.log(type);
-  console.log(success);
+  console.log("Request " + type + " was " + (success ? "successful" : "unsuccessful") + " and returned data:");
   console.log(data);
+
   if (type == "UNIQUE_ID"){
     if (data.id != null){
       uniqueID = data.id;
@@ -222,12 +283,22 @@ export function REQUEST_LISTENER(type, success, data){
       }
     }
     didFetchWebsiteData = true;
+    didAttemptFetchWebsiteData = true;
   }else if (type == "SAVE_IMAGE"){
     if (success){
       if (data.success == true){
         imagePath = "../api/tmp/" + uniqueID + ".png";
+        didUploadImage = true;
       }
     }
-    didUploadImage = true;
+    didAttemptUploadImage = true;
+  }else if (type == "GENERATE_APP"){
+    if (success){
+      if (data.success == true){
+        generatedAppLink = data.link;
+        didGenerateApp = true;
+      }
+    }
+    didAttemptGenerateApp = true;
   }
 }

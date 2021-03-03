@@ -1,6 +1,25 @@
 .App {
   text-align: center;
 }
+.MuiCircularProgress-root{
+    color: #ffffff !important;
+}
+.MuiAlert-standardError {
+  background-color: #cc4466 !important;
+  color: #ffffff !important;
+}
+
+.MuiAlert-standardSuccess{
+  background-color: #4caf50 !important;
+  color: #ffffff !important;
+}
+.MuiAlert-icon{
+  color: #ffffff !important;
+}
+.MuiPaper-rounded {
+  background-color: #222225 !important;
+  padding: 16px;
+}
 .MuiOutlinedInput-root input{
     color: #ffffff;
     font-size: 24px !important;
