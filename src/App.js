@@ -28,7 +28,7 @@ var savedUrl = "";
 var imagePath = "https://www.noahsadir.io/webappify/src/api/resources/webappify_default.png";
 var titleValue = "Web App";
 var uniqueID = "null";
-var generatedAppLink = "";
+var generatedAppLink = "https://www.example.com";
 
 const StyledInputBase = withStyles((theme) => ({
   root:{
@@ -94,6 +94,12 @@ export default class App extends React.Component {
       this.setState({appTitle: event.target.value});
     }
 
+    const handleUrlKeyPressed = (event) => {
+      if(event.key === 'Enter'){
+        handleGoButtonClick(event);
+      }
+    }
+
     const handleGoButtonClick = (event) => {
       savedUrl = this.state.urlTextField;
       this.setState({isCurrentlyFetching: true});
@@ -107,6 +113,10 @@ export default class App extends React.Component {
           this.setState({showSnackbarMessage: true, snackbarMessage: "An unexpected error occurred.", snackbarSeverity: "error"});
         }
       });
+    }
+
+    const handleInstructionsButtonClick = (event) => {
+      this.setState({showSnackbarMessage: true, snackbarMessage: "Not implemented yet!", snackbarSeverity: "warning"});
     }
 
     const handleCustomImageButtonClick = (event) => {
@@ -127,25 +137,32 @@ export default class App extends React.Component {
     }
 
     const handleGenerateButtonClick = (event) => {
-      this.setState({isCurrentlyFetching: true});
-      didAttemptGenerateApp = false;
-      JSON_RETRIEVE("GENERATE_APP",{
-        id: uniqueID,
-        link: savedUrl,
-        name: this.state.appTitle,
-        rounded: this.state.shouldRoundCorners ? "1" : "0",
-        siteimg: didUploadImage ? "false" : "true",
-      });
+      if (didGenerateApp){
+        this.setState({showSnackbarMessage: true, snackbarMessage: "An app was already generated.", snackbarSeverity: "warning"});
+      }else if (!didGenerateApp && this.state.isCurrentlyFetching){
+        this.setState({showSnackbarMessage: true, snackbarMessage: "An app is currently generating.", snackbarSeverity: "warning"});
+      }else{
+        //No app has been generated yet, so do it now
+        this.setState({isCurrentlyFetching: true});
+        didAttemptGenerateApp = false;
+        JSON_RETRIEVE("GENERATE_APP",{
+          id: uniqueID,
+          link: savedUrl,
+          name: this.state.appTitle,
+          rounded: this.state.shouldRoundCorners ? "1" : "0",
+          siteimg: didUploadImage ? "false" : "true",
+        });
 
-      waitUntilGenerateFinished(() =>{
-        this.setState({isCurrentlyFetching: false});
-        if (didGenerateApp){
-          this.setState({showSnackbarMessage: true, snackbarMessage: generatedAppLink, snackbarSeverity: "success"});
-        }else{
-          this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
-        }
+        waitUntilGenerateFinished(() =>{
+          this.setState({isCurrentlyFetching: false});
+          if (didGenerateApp){
+            this.setState({showSnackbarMessage: true, snackbarMessage: generatedAppLink, snackbarSeverity: "success"});
+          }else{
+            this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
+          }
 
-      });
+        });
+      }
     }
 
     const handleRoundCornersSwitchChange = (event) => {
@@ -157,7 +174,7 @@ export default class App extends React.Component {
         <div style={{flexGrow: (this.state.didContinueToGenerate ? 0 : 1),animation:(this.state.didContinueToGenerate ? "flexToZero 1s" : "")}}>
         </div>
         <div style={{flexGrow: 1,maxHeight:128}}>
-          <p style={{margin: 0,marginTop:32,color:"#ffffff",fontFamily:'monospace',textAlign:"center",fontSize:((window.innerWidth * 0.1 < 48) ? (window.innerWidth * 0.1) : 64),fontWeight:300}}>
+          <p className="dynamicWebappifyTitle" style={{margin: 0,marginTop:32,color:"#ffffff",fontFamily:'monospace',textAlign:"center",fontWeight:300}}>
             <span style={{color:"#3f51b5",display:"inline"}}>{"<"}</span>
             <Typing onFinishedTyping={() => {this.setState({didFinishTypingAnimation: true})}} speed={75} className="inline" cursor={<Cursor className="cursor"/>}>
               <span>webappify</span>
@@ -165,11 +182,25 @@ export default class App extends React.Component {
             <span style={{color:"#3f51b5",display:"inline"}}>{"/>"}</span>
           </p>
         </div>
+        <div style={{visibility: "hidden",height:0.01,display: (didGenerateApp ? "flex" : "none"),animation: (didGenerateApp ? "displayAndFadeToVisible 1s forwards 1.5s" : "")}}>
+          <div style={{flexGrow: 1}}></div>
+          <Paper style={{flexGrow: 4,margin: 16,padding:8}}>
+            <p style={{width:"100%",textAlign:"center",fontSize:20,fontWeight:500}}>Your web app was created successfully!</p>
+            <div style={{width:"100%",display:"flex"}}>
+              <div style={{flexGrow: 1}}></div>
+              <Button onClick={handleInstructionsButtonClick} variant="contained" color="primary" style={{flexGrow: 1, marginTop:16}}>How to Install</Button>
+              <div style={{flexGrow: 1}}></div>
+            </div>
+            <p style={{width:"100%",textAlign:"center",fontSize:16}}>Alternatively, you can click or copy & paste the link below:</p>
+            <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none"}} target="_blank">{generatedAppLink}</a></p>
+          </Paper>
+          <div style={{flexGrow: 1}}></div>
+        </div>
         <div style={{flexGrow: 1,display:"flex",maxHeight:96}}>
           <div style={{flexGrow: 1}}></div>
-          <div style={{flexGrow: 2, paddingTop: (this.state.didFinishTypingAnimation ? 0 : 64),opacity: 0,animation: (this.state.didFinishTypingAnimation ? "fadeToVisible 1s forwards 0.5s" : "")}}>
+          <div style={{flexGrow: 2, paddingTop: (this.state.didFinishTypingAnimation ? 0 : 64),opacity: (didGenerateApp ? 1 : 0),animation: (this.state.didFinishTypingAnimation ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "fadeToVisible 1s forwards 0.5s") : "")}}>
             <MuiThemeProvider theme={darkTheme}>
-              <TextField variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
+              <TextField onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
               <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.state.didContinueToGenerate || this.state.isCurrentlyFetching ? "none" : "inline-flex")}}>
                 <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
               </IconButton>
@@ -178,7 +209,7 @@ export default class App extends React.Component {
           </div>
           <div style={{flexGrow: 1}}></div>
         </div>
-        <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.state.didContinueToGenerate ? "flexToFour 1s" : ""),flex: (this.state.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.state.didContinueToGenerate ? "visible" : "hidden")}}>
+        <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.state.didContinueToGenerate ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "flexToFour 1s") : ""),flex: (this.state.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.state.didContinueToGenerate ? "visible" : "hidden")}}>
           <div style={{display: "flex", flexGrow: 1}}>
             <div style={{flexGrow: 1}}></div>
             <Paper style={{display:"flex",flexGrow: 2,height:"fit-content",backgroundColor:"#222225 !important"}}>
@@ -203,7 +234,7 @@ export default class App extends React.Component {
                     <Button variant="outlined" color="background" style={{width:"100%",marginTop:16}}>Custom Image<input onChange={handleCustomImageButtonClick} type="file" style={{position:"absolute",width:"100%",height:"100%",opacity:0}}/></Button>
                   </div>
                   <div style={{width:"100%"}}>
-                    <Button onClick={handleGenerateButtonClick} variant="contained" color="primary" style={{width:"100%",height:48,marginTop:16}}>Generate</Button>
+                    <Button onClick={handleGenerateButtonClick} variant="contained" color="primary" style={{width:"100%",height:48,marginTop:8,marginBottom:8}}>Generate</Button>
                   </div>
                 </MuiThemeProvider>
               </div>
@@ -218,7 +249,7 @@ export default class App extends React.Component {
           </div>
         </Dialog>
         <MuiThemeProvider theme={darkTheme}>
-          <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'center' }}  open={this.state.showSnackbarMessage} autoHideDuration={60000} onClose={() => {this.setState({showSnackbarMessage: false})}}>
+          <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'center' }}  open={this.state.showSnackbarMessage} autoHideDuration={6000} onClose={() => {this.setState({showSnackbarMessage: false})}}>
             <Alert onClose={() => {this.setState({showSnackbarMessage: false})}} severity={this.state.snackbarSeverity}>
               {this.state.snackbarMessage}
             </Alert>
