@@ -5,9 +5,11 @@ $name = $_GET["name"];
 $rounded = $_GET["rounded"];
 $imgPath = "tmp/".$_GET["id"].'.png';
 $imgFromWebsite = $_GET['siteimg'];
+
 if ($imgFromWebsite == "true"){
   $imgPath = $web_link."/apple-touch-icon.png";
 }
+
 $image = imagecreatefrompng($imgPath);
 if (!$image){
   $image = imagecreatefromjpeg($imgPath);
@@ -18,7 +20,6 @@ if (isset($_GET["link"],$_GET["name"])){
 }else{
   header('Content-Type: application/json');
   echo '{"success":false,"message":"Could not load parameters"}';
-
 }
 
 function generateApp($unique_id,$web_link,$name,$image,$rounded){
