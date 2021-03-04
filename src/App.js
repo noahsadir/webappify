@@ -4,8 +4,6 @@
 
 import React from "react";
 import './App.css';
-
-
 import { withStyles } from '@material-ui/core/styles';
 import { Button, Snackbar, Dialog, DialogTitle, TextField, Paper, InputBase, FormGroup, FormControlLabel, Switch, IconButton, Icon, CircularProgress } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
@@ -24,7 +22,7 @@ var didAttemptUploadImage = false;
 var didAttemptGenerateApp = false;
 
 var savedUrl = "";
-var imagePath = "https://www.noahsadir.io/webappify/src/api/resources/webappify_default.png";
+var imagePath = "https://www.noahsadir.io/webappify/api/resources/webappify_default.png";
 var titleValue = "Web App";
 var uniqueID = "null";
 var generatedAppLink = "https://www.example.com";
@@ -63,6 +61,7 @@ const StyledInputBase = withStyles((theme) => ({
 },
 }))(InputBase);
 
+/* UI code */
 export default class App extends React.Component {
   constructor(props){
     super(props);
@@ -77,7 +76,14 @@ export default class App extends React.Component {
       showSnackbarMessage: false,
       snackbarMessage: "Error",
       snackbarSeverity: "error",
+      maxImageSize: 3500000,
+      maxImageSizeDisplay: "3 MB",
+      hasCustomImage: false,
+      customImageResult: null,
+      customImage: null,
     }
+    //Note: If modifying maxImageSize, make sure to adjust server-side limit
+    //      in save_image.php
   }
 
   render(){
@@ -119,19 +125,21 @@ export default class App extends React.Component {
     }
 
     const handleCustomImageButtonClick = (event) => {
+      //IMPORTANT TODO: Change code so that image is only uploaded when generate button is clicked
       if (event.target.files.length > 0){
         didAttemptUploadImage = false;
-        console.log("Found file " + event.target.files[0].value);
-        this.setState({isCurrentlyFetching: true,});
-        JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: event.target.files[0]});
-        waitUntilImageUploaded(() => {
-          this.setState({state: this.state, isCurrentlyFetching: false});
-          if (didUploadImage){
-            //success
-          }else{
-            this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
-          }
-        });
+        console.log("Found file with size " + event.target.files[0].size);
+        //Should display 3MB limit to user, but allow 15% tolerance
+        if (event.target.files[0].size < this.state.maxImageSize){
+          var reader = new FileReader();
+          reader.onload = (readerEvent) => {
+            this.setState({hasCustomImage: true, customImageResult: readerEvent.target.result, customImage: event.target.files[0], showSnackbarMessage: true, snackbarMessage: "Added custom image.", snackbarSeverity: "success"});
+          };
+          reader.readAsDataURL(event.target.files[0]);
+
+        }else{
+          this.setState({showSnackbarMessage: true, snackbarMessage: "Image must be " + this.state.maxImageSizeDisplay + " or less.", snackbarSeverity: "error"});
+        }
       }
     }
 
@@ -142,25 +150,52 @@ export default class App extends React.Component {
         this.setState({showSnackbarMessage: true, snackbarMessage: "An app is currently generating.", snackbarSeverity: "warning"});
       }else{
         //No app has been generated yet, so do it now
-        this.setState({isCurrentlyFetching: true});
         didAttemptGenerateApp = false;
-        JSON_RETRIEVE("GENERATE_APP",{
-          id: uniqueID,
-          link: savedUrl,
-          name: this.state.appTitle,
-          rounded: this.state.shouldRoundCorners ? "1" : "0",
-          siteimg: didUploadImage ? "false" : "true",
-        });
+        this.setState({isCurrentlyFetching: true});
 
-        waitUntilGenerateFinished(() =>{
-          this.setState({isCurrentlyFetching: false});
-          if (didGenerateApp){
-            //this.setState({showSnackbarMessage: true, snackbarMessage: generatedAppLink, snackbarSeverity: "success"});
-          }else{
-            this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
-          }
-
-        });
+        if (this.state.hasCustomImage){
+          JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: this.state.customImage});
+          waitUntilImageUploaded(() => {
+            this.setState({showSnackbarMessage: true, snackbarMessage: "Successfully uploaded image!", snackbarSeverity: "success"});
+            if (didUploadImage){
+              //Image successfully uploaded
+              JSON_RETRIEVE("GENERATE_APP",{
+                id: uniqueID,
+                link: savedUrl,
+                name: this.state.appTitle,
+                rounded: this.state.shouldRoundCorners ? "1" : "0",
+                siteimg: didUploadImage ? "false" : "true",
+              });
+              waitUntilGenerateFinished(() =>{
+                this.setState({isCurrentlyFetching: false});
+                if (didGenerateApp){
+                  //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app WITH custom icon", snackbarSeverity: "success"});
+                }else{
+                  this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
+                }
+              });
+            }else{
+              this.setState({isCurrentlyFetching: false});
+              this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
+            }
+          });
+        }else{
+          JSON_RETRIEVE("GENERATE_APP",{
+            id: uniqueID,
+            link: savedUrl,
+            name: this.state.appTitle,
+            rounded: this.state.shouldRoundCorners ? "1" : "0",
+            siteimg: didUploadImage ? "false" : "true",
+          });
+          waitUntilGenerateFinished(() =>{
+            this.setState({isCurrentlyFetching: false});
+            if (didGenerateApp){
+              //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app W/O custom icon", snackbarSeverity: "success"});
+            }else{
+              this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
+            }
+          });
+        }
       }
     }
 
@@ -211,10 +246,12 @@ export default class App extends React.Component {
         <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.state.didContinueToGenerate ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "flexToFour 1s") : ""),flex: (this.state.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.state.didContinueToGenerate ? "visible" : "hidden")}}>
           <div style={{display: "flex", flexGrow: 1}}>
             <div style={{flexGrow: 1}}></div>
-            <Paper style={{display:"flex",flexGrow: 2,height:"fit-content",backgroundColor:"#222225 !important"}}>
+            <div style={{flexGrow: 2,display:"flex",flexFlow:"column"}}>
+
+            <Paper style={{display:"flex",flexGrow: 0,height:"fit-content",backgroundColor:"#222225 !important"}}>
               <div style={{flexGrow: 2,marginRight:16,display:"flex"}}>
                 <div style={{flexGrow: 1,width:0,height:"fit-content",marginRight:16}}>
-                  <img style={{borderRadius: (this.state.shouldRoundCorners ? "20%" : "0%"),float:"left",maxWidth:"100%"}} src={imagePath}/>
+                  <img style={{borderRadius: (this.state.shouldRoundCorners ? "20%" : "0%"),float:"left",maxWidth:"100%"}} src={this.state.hasCustomImage ? this.state.customImageResult : imagePath}/>
                 </div>
               </div>
               <div style={{flexGrow: 2}}>
@@ -239,6 +276,10 @@ export default class App extends React.Component {
               </div>
             </Paper>
             <div style={{flexGrow: 1}}></div>
+
+            </div>
+
+            <div style={{flexGrow: 1}}></div>
           </div>
         </div>
         <Dialog aria-labelledby="simple-dialog-title" open={this.state.didContinueToGenerate && this.state.isCurrentlyFetching}>
@@ -259,10 +300,7 @@ export default class App extends React.Component {
   }
 }
 
-class WebAppGenerator extends React.Component {
-
-}
-
+/* Callbacks */
 function waitUntilGenerateFinished(callback){
   var requestTimeout = window.setInterval(() => {
     if (didAttemptGenerateApp){
@@ -290,6 +328,7 @@ function waitUntilImageUploaded(callback){
   }, 500);
 }
 
+/* API Listener */
 export function REQUEST_LISTENER(type, success, data){
   console.log("Request " + type + " was " + (success ? "successful" : "unsuccessful") + " and returned data:");
   console.log(data);
