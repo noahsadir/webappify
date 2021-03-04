@@ -1,9 +1,9 @@
 <?php
-$unique_id = $_GET['id'];
+$unique_id = str_replace('.','',str_replace('/','',str_replace('\\','',$_GET['id'])));
 $web_link = $_GET["link"];
-$name = $_GET["name"];
+$name = str_replace("\\","",str_replace("\"","",$_GET["name"]));
 $rounded = $_GET["rounded"];
-$imgPath = "tmp/".$_GET["id"].'.png';
+$imgPath = "tmp/".$unique_id.'.png';
 $imgFromWebsite = $_GET['siteimg'];
 
 if ($imgFromWebsite == "true"){
@@ -18,18 +18,113 @@ if (!$image){
 if (isset($_GET["link"],$_GET["name"])){
   generateApp($unique_id, $web_link, $name, $image, $rounded);
 }else{
+  deleteTemporaryImage();
   header('Content-Type: application/json');
   echo '{"success":false,"message":"Could not load parameters"}';
 }
 
 function generateApp($unique_id,$web_link,$name,$image,$rounded){
   if (!mkdir("../apps/".$unique_id)){
+    deleteTemporaryImage();
     header('Content-Type: application/json');
     echo '{"success":false,"message":"Unable to create directory"}';
   }else{
-    $index_html = '<!DOCTYPE html><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /><meta name="HandheldFriendly" content="true" /><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#eeeeee"><title>'.$name.'</title></head><div style="display:flex;flex-flow:column;height:100vh"><div style="flex: 1 0 auto"></div><div style="flex: 1 0 auto;display:flex;"><div style="flex: 1 0 auto"></div><div style="flex: 1 0 auto"><body style="background-color:#111115;color:#ffffff;font-family:sans-serif"><p style="text-align:center">Once the app is installed, it should redirect automatically.</p><p style="text-align:center;margin:24px">Otherwise, click the link below:</p><a style="width: 128px;padding: 16px;border-radius: 8px;background-color: #2255AA;text-decoration: none;color: #FFFFFF;margin-top:8px;margin-left:calc(50% - 64px)" href="'.$web_link.'">Go to website</a></div><div style="flex: 1 0 auto"></div></div><div style="flex: 1 0 auto"></div></div><script>if("serviceWorker" in navigator){navigator.serviceWorker.register("worker.js").then(function() { console.log("Service Worker Registered"); });}let dp;window.addEventListener("beforeinstallprompt", (e) => {console.log("should be installable");e.preventDefault();dp = e;});window.addEventListener("appinstalled", (evt) => {console.log("INSTALL: Success");});if (window.matchMedia("(display-mode: standalone)").matches) {console.log("Installed");window.location.replace("'.$web_link.'");}</script></body>';
-    $worker_js = 'const version = "1";const cacheName = `'.$unique_id.'-${version}`;self.addEventListener("install", e => {e.waitUntil(caches.open(cacheName).then(cache => {return cache.addAll([`index.html`,`main-icon.png`,`apple-touch-icon.png`]).then(() => self.skipWaiting());}));});self.addEventListener("activate", event => {event.waitUntil(self.clients.claim());});self.addEventListener("fetch", event => {event.respondWith(caches.open(cacheName).then(cache => cache.match(event.request, {ignoreSearch: true})).then(response => {return response || fetch(event.request);}));});';
-    $manifest_webmanifest = '{"short_name": "'.$name.'","name": "'.$name.'","description": "Web app for '.$name.'","icons": [{"src": "main-icon.png","type": "image/png","sizes": "1024x1024"},{"src": "main-icon-192.png","type": "image/png","sizes": "192x192","purpose": "any maskable"},{"src": "main-icon-512.png","type": "image/png","sizes": "512x512","purpose": "any maskable"}],"start_url": "/webappify/apps/'.$unique_id.'/index.html","background_color": "#000000","display": "standalone","scope": "../../apps/'.$unique_id.'/","theme_color": "#222222","shortcuts":[]}';
+    $index_html = '<!DOCTYPE html>'.
+    '<link rel="manifest" href="manifest.webmanifest">'.
+    '<link rel="apple-touch-icon" href="apple-touch-icon.png">'.
+    '<html>'.
+      '<head>'.
+        '<meta charset="UTF-8">'.
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />'.
+        '<meta name="HandheldFriendly" content="true" />'.
+        '<meta name="apple-mobile-web-app-capable" content="yes">'.
+        '<meta name="apple-mobile-web-app-status-bar-style" content="default">'.
+        '<meta name="theme-color" content="#eeeeee">'.
+        '<title>'.$name.'</title>'.
+      '</head>'.
+      '<body style="background-color:#111115;color:#ffffff;font-family:sans-serif">'.
+        '<div style="display:flex;flex-flow:column;height:100vh">'.
+          '<div style="flex: 1 0 auto"></div>'.
+          '<div style="flex: 1 0 auto;display:flex;">'.
+            '<div style="flex: 1 0 auto"></div>'.
+            '<div style="flex: 1 0 auto;width: 100%">'.
+              '<p style="text-align:center">Once the app is installed, it should redirect automatically.</p>'.
+              '<p style="text-align:center;margin:24px">Otherwise, click the link below:</p>'.
+              '<a style="width: 128px;padding: 16px;border-radius: 8px;background-color: #2255AA;text-decoration: none;color: #FFFFFF;margin-top:8px;margin-left:calc(50% - 64px)" href="'.$web_link.'">Go to website</a>'.
+            '</div>'.
+            '<div style="flex: 1 0 auto"></div>'.
+          '</div>'.
+          '<div style="flex: 1 0 auto"></div>'.
+        '</div>'.
+        '<script>'.
+          'if("serviceWorker" in navigator){'.
+            'navigator.serviceWorker.register("worker.js").then(function() {'.
+              'console.log("Service Worker Registered"); '.
+            '});'.
+          '}'.
+          'let dp;'.
+          'window.addEventListener("beforeinstallprompt", (e) => {'.
+            'console.log("should be installable");'.
+            'e.preventDefault();dp = e;'.
+          '});'.
+          'window.addEventListener("appinstalled", (evt) => {'.
+            'console.log("INSTALL: Success");'.
+          '});'.
+          'if (window.matchMedia("(display-mode: standalone)").matches) {'.
+            'console.log("Installed");'.
+            'window.location.replace("'.$web_link.'");'.
+          '}'.
+        '</script>'.
+      '</body>'.
+    '</html>';
+
+    $worker_js =
+    'const version = "1";'.
+    'const cacheName = `'.$unique_id.'-${version}`;'.
+    'self.addEventListener("install", e => {'.
+      'e.waitUntil(caches.open(cacheName).then(cache => {'.
+        'return cache.addAll([`index.html`,`main-icon.png`,`apple-touch-icon.png`]).then(() => self.skipWaiting());'.
+      '}));'.
+    '});'.
+    'self.addEventListener("activate", event => {'.
+      'event.waitUntil(self.clients.claim());'.
+    '});'.
+    'self.addEventListener("fetch", event => {'.
+      'event.respondWith(caches.open(cacheName).then(cache => cache.match(event.request, {ignoreSearch: true})).then(response => {'.
+        'return response || fetch(event.request);'.
+      '}));'.
+    '});';
+
+    $manifest_webmanifest =
+    '{'.
+      '"short_name": "'.$name.'",'.
+      '"name": "'.$name.'",'.
+      '"description": "Web app for '.$name.'",'.
+      '"icons": ['.
+        '{'.
+          '"src": "main-icon.png",'.
+          '"type": "image/png",'.
+          '"sizes": "1024x1024"'.
+        '},'.
+        '{'.
+          '"src": "main-icon-192.png",'.
+          '"type": "image/png",'.
+          '"sizes": "192x192","purpose": "any maskable"'.
+        '},'.
+        '{'.
+          '"src": "main-icon-512.png",'.
+          '"type": "image/png",'.
+          '"sizes": "512x512",'.
+          '"purpose": "any maskable"'.
+        '}'.
+      '],'.
+      '"start_url": "/webappify/apps/'.$unique_id.'/index.html",'.
+      '"background_color": "#000000",'.
+      '"display": "standalone",'.
+      '"scope": "../../apps/'.$unique_id.'/",'.
+      '"theme_color": "#222222",'.
+      '"shortcuts":[]'.
+    '}';
 
     write("../apps/".$unique_id."/index.html",$index_html);
     write("../apps/".$unique_id."/worker.js",$worker_js);
@@ -65,6 +160,7 @@ function generateApp($unique_id,$web_link,$name,$image,$rounded){
     saveResized("../apps/".$unique_id."/main-icon-192.png",$image,192,192);
 
     $newLink = 'https://www.noahsadir.io/webappify/apps/'.$unique_id;
+    deleteTemporaryImage();
     header('Content-Type: application/json');
     echo '{"success":true,"link":"'.$newLink.'"}';
     //echo '<div id="success"><p id="success_title">Success!</p><p>Click on the link below or copy & paste it into your browser.</p><a id="success_link" href="'.$newLink.'">'.$newLink.'</a></div>';
@@ -123,6 +219,13 @@ function imageCreateCorners($src, $radius) {
   imagedestroy($img);
 
   return $res;
+}
+
+//Delete image saved by save_image.php
+function deleteTemporaryImage(){
+  if (file_exists('tmp/'.$unique_id.'.png')){
+    unlink('tmp/'.$unique_id.'.png');
+  }
 }
 
 function saveResized($path,$image,$width,$height){
