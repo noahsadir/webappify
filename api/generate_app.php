@@ -118,7 +118,7 @@ function generateApp($unique_id,$web_link,$name,$image,$rounded){
           '"purpose": "any maskable"'.
         '}'.
       '],'.
-      '"start_url": "/webappify/apps/'.$unique_id.'/index.html",'.
+      '"start_url": "/apps/'.$unique_id.'/index.html",'.
       '"background_color": "#000000",'.
       '"display": "standalone",'.
       '"scope": "../../apps/'.$unique_id.'/",'.
@@ -159,7 +159,7 @@ function generateApp($unique_id,$web_link,$name,$image,$rounded){
     saveResized("../apps/".$unique_id."/main-icon-512.png",$image,512,512);
     saveResized("../apps/".$unique_id."/main-icon-192.png",$image,192,192);
 
-    $newLink = 'https://www.noahsadir.io/webappify/apps/'.$unique_id;
+    $newLink = 'https://webappify.noahsadir.io/apps/'.$unique_id;
     deleteTemporaryImage();
     header('Content-Type: application/json');
     echo '{"success":true,"link":"'.$newLink.'"}';

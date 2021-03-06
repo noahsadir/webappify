@@ -3,9 +3,9 @@ $image = $_FILES["image"]["tmp_name"];
 $id = $_POST['id'];
 if ($image && isset($id)){
   //NOTE: If maxImageSize is modified in web app, you should change it here as well.
-  //Accept file sizes up to 4 MB, even through
-  //web app only accepts 3.5 MB (and prompts for 3 MB)
-  if (filesize($image) < 4000000){
+  //Accept file sizes under 4 MB, even through
+  //web app only accepts under 3.5 MB (and prompts for 3 MB)
+  if (filesize($image) < 4096000){
     $pngImage = imagecreatefrompng($image);
     //Icons should typically be a PNG, but there's no harm if it's a JPEG
     if (!$pngImage){

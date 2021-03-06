@@ -22,7 +22,7 @@ var didAttemptUploadImage = false;
 var didAttemptGenerateApp = false;
 
 var savedUrl = "";
-var imagePath = "https://www.noahsadir.io/webappify/api/resources/webappify_default.png";
+var imagePath = "../api/resources/webappify_default.png";
 var titleValue = "Web App";
 var uniqueID = "null";
 var generatedAppLink = "https://www.example.com";
@@ -156,7 +156,7 @@ export default class App extends React.Component {
         if (this.state.hasCustomImage){
           JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: this.state.customImage});
           waitUntilImageUploaded(() => {
-            this.setState({showSnackbarMessage: true, snackbarMessage: "Successfully uploaded image!", snackbarSeverity: "success"});
+            //this.setState({showSnackbarMessage: true, snackbarMessage: "Successfully uploaded image!", snackbarSeverity: "success"});
             if (didUploadImage){
               //Image successfully uploaded
               JSON_RETRIEVE("GENERATE_APP",{
