@@ -1,3 +1,9 @@
+/*
+--------------
+    App.js
+--------------
+*/
+
 import React from "react";
 import './App.css';
 import { withStyles } from '@material-ui/core/styles';
