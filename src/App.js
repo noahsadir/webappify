@@ -1,11 +1,23 @@
-//@material-ui/core
-//@material-ui/lab
-//react-typing-animation
-
 import React from "react";
 import './App.css';
 import { withStyles } from '@material-ui/core/styles';
-import { Button, Snackbar, Dialog, DialogTitle, TextField, Paper, InputBase, FormGroup, FormControlLabel, Switch, IconButton, Icon, CircularProgress } from '@material-ui/core';
+
+//MUI core components
+import {
+  Button,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  TextField,
+  Paper,
+  InputBase,
+  FormGroup,
+  FormControlLabel,
+  Switch,
+  IconButton,
+  Icon,
+  CircularProgress } from '@material-ui/core';
+
 import { Alert } from '@material-ui/lab';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Typing, {Cursor} from 'react-typing-animation';
