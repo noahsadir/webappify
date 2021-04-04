@@ -1,14 +1,12 @@
-/*
---------------
-    App.js
---------------
-*/
+/* ------------------- *
+ *       App.js        *
+ * ------------------- */
 
 import React from "react";
 import './App.css';
-import { withStyles } from '@material-ui/core/styles';
 
 //MUI core components
+import { withStyles } from '@material-ui/core/styles';
 import {
   Button,
   Snackbar,
@@ -22,22 +20,40 @@ import {
   Switch,
   IconButton,
   Icon,
-  CircularProgress } from '@material-ui/core';
-
-import { Alert } from '@material-ui/lab';
+  CircularProgress,
+  DialogContent,
+  DialogContentText,
+  DialogActions
+} from '@material-ui/core';
+import { Alert, ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Typing, {Cursor} from 'react-typing-animation';
 import {JSON_RETRIEVE} from './Requests';
 
 const darkTheme = createMuiTheme({ palette: { type: "dark"} });
+const ExpandingTabs = withStyles((theme) => ({
+  root: {
+    width: "100%",
+    minWidth: 256,
+  },
+  grouped: {
+    width: "50%",
+  },
+}))(ToggleButtonGroup);
+
+
+var developmentMode = false;
 
 var didFetchWebsiteData = false;
 var didUploadImage = false;
 var didGenerateApp = false;
 
-var didAttemptFetchWebsiteData = false;
-var didAttemptUploadImage = false;
-var didAttemptGenerateApp = false;
+
+var didAttempt = {
+  fetchWebsiteData: false,
+  uploadImage: false,
+  generateApp: false,
+};
 
 var savedUrl = "";
 var imagePath = "../api/resources/webappify_default.png";
@@ -45,43 +61,12 @@ var titleValue = "Web App";
 var uniqueID = "null";
 var generatedAppLink = "https://www.example.com";
 
-const StyledInputBase = withStyles((theme) => ({
-  root:{
-    width:"calc(100% - 8px)",
-    margin:8,
-  },
-  input: {
-    borderRadius: 4,
-    position: 'relative',
-    border: '1px solid rgba(255, 255, 255, 0.12)',
-    fontSize: 16,
-    height: 20,
-    padding: '13px 26px 13px 12px',
-    transition: theme.transitions.create(['border-color', 'box-shadow']),
-    // Use the system font instead of the default Roboto font.
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-      ].join(','),
-      '&:focus': {
-    borderRadius: 4,
-    borderColor: '#80bdff',
-    boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
-  },
-},
-}))(InputBase);
-
-/* UI code */
+/**
+ * The React Component which primarily controls the UI and
+ * handles user input and interaction.
+ */
 export default class App extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       urlTextField: "https://",
@@ -99,12 +84,14 @@ export default class App extends React.Component {
       hasCustomImage: false,
       customImageResult: null,
       customImage: null,
+      instructionsDialogOpen: false,
+      instructionsDeviceType: "chrome",
     }
     //Note: If modifying maxImageSize, make sure to adjust server-side limit
     //      in save_image.php
   }
 
-  render(){
+  render() {
     var textFieldStyle = {
       underline:{'&:after': {border: '2px solid red'  }}
     };
@@ -118,7 +105,7 @@ export default class App extends React.Component {
     }
 
     const handleUrlKeyPressed = (event) => {
-      if(event.key === 'Enter'){
+      if(event.key === 'Enter') {
         handleGoButtonClick(event);
       }
     }
@@ -126,56 +113,67 @@ export default class App extends React.Component {
     const handleGoButtonClick = (event) => {
       savedUrl = this.state.urlTextField;
       this.setState({isCurrentlyFetching: true});
-      didAttemptFetchWebsiteData = false;
+      didAttempt.fetchWebsiteData = false;
       JSON_RETRIEVE("UNIQUE_ID");
-      waitUntilRequestFinished(() => {
+      waitUntilTrue("fetchWebsiteData", () => {
         this.setState({isCurrentlyFetching: false});
-        if (didFetchWebsiteData){
+        if (didFetchWebsiteData) {
           this.setState({state: this.state,didContinueToGenerate: true,appTitle: titleValue});
-        }else{
+        } else{
           this.setState({showSnackbarMessage: true, snackbarMessage: "An unexpected error occurred.", snackbarSeverity: "error"});
         }
       });
     }
 
     const handleInstructionsButtonClick = (event) => {
-      this.setState({showSnackbarMessage: true, snackbarMessage: "Not implemented yet!", snackbarSeverity: "warning"});
+      this.setState({instructionsDialogOpen: true});
+      //this.setState({showSnackbarMessage: true, snackbarMessage: "Not implemented yet!", snackbarSeverity: "warning"});
+    }
+
+    const handleInstructionsDialogClose = (event) => {
+      this.setState({instructionsDialogOpen: false});
+    }
+
+    const handleInstructionsDeviceChange = (event,newAlignment) => {
+      if (newAlignment != null){
+        this.setState({instructionsDeviceType: newAlignment});
+      }
     }
 
     const handleCustomImageButtonClick = (event) => {
       //IMPORTANT TODO: Change code so that image is only uploaded when generate button is clicked
-      if (event.target.files.length > 0){
-        didAttemptUploadImage = false;
+      if (event.target.files.length > 0) {
+        didAttempt.uploadImage = false;
         console.log("Found file with size " + event.target.files[0].size);
         //Should display 3MB limit to user, but allow 15% tolerance
-        if (event.target.files[0].size < this.state.maxImageSize){
+        if (event.target.files[0].size < this.state.maxImageSize) {
           var reader = new FileReader();
           reader.onload = (readerEvent) => {
             this.setState({hasCustomImage: true, customImageResult: readerEvent.target.result, customImage: event.target.files[0], showSnackbarMessage: true, snackbarMessage: "Added custom image.", snackbarSeverity: "success"});
           };
           reader.readAsDataURL(event.target.files[0]);
 
-        }else{
+        } else{
           this.setState({showSnackbarMessage: true, snackbarMessage: "Image must be " + this.state.maxImageSizeDisplay + " or less.", snackbarSeverity: "error"});
         }
       }
     }
 
     const handleGenerateButtonClick = (event) => {
-      if (didGenerateApp){
+      if (didGenerateApp) {
         this.setState({showSnackbarMessage: true, snackbarMessage: "An app was already generated.", snackbarSeverity: "warning"});
-      }else if (!didGenerateApp && this.state.isCurrentlyFetching){
+      } else if (!didGenerateApp && this.state.isCurrentlyFetching) {
         this.setState({showSnackbarMessage: true, snackbarMessage: "An app is currently generating.", snackbarSeverity: "warning"});
-      }else{
+      } else{
         //No app has been generated yet, so do it now
-        didAttemptGenerateApp = false;
+        didAttempt.generateApp = false;
         this.setState({isCurrentlyFetching: true});
 
-        if (this.state.hasCustomImage){
+        if (this.state.hasCustomImage) {
           JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: this.state.customImage});
-          waitUntilImageUploaded(() => {
+          waitUntilTrue("uploadImage", () => {
             //this.setState({showSnackbarMessage: true, snackbarMessage: "Successfully uploaded image!", snackbarSeverity: "success"});
-            if (didUploadImage){
+            if (didUploadImage) {
               //Image successfully uploaded
               JSON_RETRIEVE("GENERATE_APP",{
                 id: uniqueID,
@@ -184,20 +182,20 @@ export default class App extends React.Component {
                 rounded: this.state.shouldRoundCorners ? "1" : "0",
                 siteimg: didUploadImage ? "false" : "true",
               });
-              waitUntilGenerateFinished(() =>{
+              waitUntilTrue("generateApp", () =>{
                 this.setState({isCurrentlyFetching: false});
-                if (didGenerateApp){
+                if (didGenerateApp) {
                   //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app WITH custom icon", snackbarSeverity: "success"});
-                }else{
+                } else{
                   this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
                 }
               });
-            }else{
+            } else{
               this.setState({isCurrentlyFetching: false});
               this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
             }
           });
-        }else{
+        } else{
           JSON_RETRIEVE("GENERATE_APP",{
             id: uniqueID,
             link: savedUrl,
@@ -205,11 +203,11 @@ export default class App extends React.Component {
             rounded: this.state.shouldRoundCorners ? "1" : "0",
             siteimg: didUploadImage ? "false" : "true",
           });
-          waitUntilGenerateFinished(() =>{
+          waitUntilTrue("generateApp", () =>{
             this.setState({isCurrentlyFetching: false});
-            if (didGenerateApp){
+            if (didGenerateApp) {
               //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app W/O custom icon", snackbarSeverity: "success"});
-            }else{
+            } else{
               this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
             }
           });
@@ -222,7 +220,7 @@ export default class App extends React.Component {
     }
 
     return (
-      <div id="main-content" style={{display:"flex",backgroundColor: "#111115",height:"100%",width:"100%",position:"fixed",flexFlow:"column"}}>
+      <div id="main-content" style={{display:"flex",backgroundColor: "#111115",height:"100%",width:"100%",position:"fixed",flexFlow:"column"}}><MuiThemeProvider theme={darkTheme}>
         <div style={{flexGrow: (this.state.didContinueToGenerate ? 0 : 1),animation:(this.state.didContinueToGenerate ? "flexToZero 1s" : "")}}>
         </div>
         <div style={{flexGrow: 1,maxHeight:128}}>
@@ -251,13 +249,11 @@ export default class App extends React.Component {
         <div style={{flexGrow: 1,display:"flex",maxHeight:96}}>
           <div style={{flexGrow: 1}}></div>
           <div style={{flexGrow: 2, paddingTop: (this.state.didFinishTypingAnimation ? 0 : 64),opacity: (didGenerateApp ? 1 : 0),animation: (this.state.didFinishTypingAnimation ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "fadeToVisible 1s forwards 0.5s") : "")}}>
-            <MuiThemeProvider theme={darkTheme}>
-              <TextField inputProps={{autoComplete:"off",type:"url"}} autoComplete="off" onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
-              <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.state.didContinueToGenerate || this.state.isCurrentlyFetching ? "none" : "inline-flex")}}>
-                <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
-              </IconButton>
-              <CircularProgress color="background" style={{flexGrow: 1,width:32,height:32,padding:16,marginLeft:-64,position:"absolute",display: ((!this.state.didContinueToGenerate && this.state.isCurrentlyFetching) ? "inline-flex" : "none")}}/>
-            </MuiThemeProvider>
+            <TextField inputProps={{autoComplete:"off",type:"url"}} autoComplete="off" onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
+            <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.state.didContinueToGenerate || this.state.isCurrentlyFetching ? "none" : "inline-flex")}}>
+              <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
+            </IconButton>
+            <CircularProgress color="background" style={{flexGrow: 1,width:32,height:32,padding:16,marginLeft:-64,position:"absolute",display: ((!this.state.didContinueToGenerate && this.state.isCurrentlyFetching) ? "inline-flex" : "none")}}/>
           </div>
           <div style={{flexGrow: 1}}></div>
         </div>
@@ -273,24 +269,22 @@ export default class App extends React.Component {
                 </div>
               </div>
               <div style={{flexGrow: 2}}>
-                <MuiThemeProvider theme={darkTheme}>
-                  <div style={{display:"flex"}}>
-                    <div style={{flexGrow: 1}}></div>
-                    <TextField onChange={handleTitleTextFieldChange} style={{flexGrow: 2,color:"#ffffff",width:"100%"}} value={this.state.appTitle}></TextField>
-                    <div style={{flexGrow: 1}}></div>
-                  </div>
-                  <FormControlLabel
-                    style={{marginTop:16}}
-                    control={<Switch checked={this.state.shouldRoundCorners} onChange={handleRoundCornersSwitchChange} name="roundCornersSwitch" color="primary"/>}
-                    label={<span style={{color:"#ffffff"}}>Round corners</span>}>
-                  </FormControlLabel>
-                  <div style={{width:"100%"}}>
-                    <Button variant="outlined" color="background" style={{width:"100%",marginTop:16}}>Custom Image<input onChange={handleCustomImageButtonClick} type="file" style={{position:"absolute",width:"100%",height:"100%",opacity:0}}/></Button>
-                  </div>
-                  <div style={{width:"100%"}}>
-                    <Button onClick={handleGenerateButtonClick} variant="contained" color="primary" style={{width:"100%",height:48,marginTop:16}}>Generate</Button>
-                  </div>
-                </MuiThemeProvider>
+                <div style={{display:"flex"}}>
+                  <div style={{flexGrow: 1}}></div>
+                  <TextField onChange={handleTitleTextFieldChange} style={{flexGrow: 2,color:"#ffffff",width:"100%"}} value={this.state.appTitle}></TextField>
+                  <div style={{flexGrow: 1}}></div>
+                </div>
+                <FormControlLabel
+                  style={{marginTop:16}}
+                  control={<Switch checked={this.state.shouldRoundCorners} onChange={handleRoundCornersSwitchChange} name="roundCornersSwitch" color="primary"/>}
+                  label={<span style={{color:"#ffffff"}}>Round corners</span>}>
+                </FormControlLabel>
+                <div style={{width:"100%"}}>
+                  <Button variant="outlined" color="background" style={{width:"100%",marginTop:16}}>Custom Image<input onChange={handleCustomImageButtonClick} type="file" style={{position:"absolute",width:"100%",height:"100%",opacity:0}}/></Button>
+                </div>
+                <div style={{width:"100%"}}>
+                  <Button onClick={handleGenerateButtonClick} variant="contained" color="primary" style={{width:"100%",height:48,marginTop:16}}>Generate</Button>
+                </div>
               </div>
             </Paper>
             <div style={{flexGrow: 1}}></div>
@@ -306,86 +300,114 @@ export default class App extends React.Component {
             <CircularProgress style={{flex: "1 0 auto", padding: 16, width:32,height:32}}/>
           </div>
         </Dialog>
-        <MuiThemeProvider theme={darkTheme}>
-          <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'center' }}  open={this.state.showSnackbarMessage} autoHideDuration={6000} onClose={() => {this.setState({showSnackbarMessage: false})}}>
-            <Alert onClose={() => {this.setState({showSnackbarMessage: false})}} severity={this.state.snackbarSeverity}>
-              {this.state.snackbarMessage}
-            </Alert>
-          </Snackbar>
-        </MuiThemeProvider>
-      </div>
+        <Dialog open={this.state.instructionsDialogOpen} onClose={handleInstructionsDialogClose} aria-labelledby={"alert-dialog-title"}>
+          <DialogTitle id="alert-dialog-slide-title">{"Install Web App"}
+            <ExpandingTabs value={this.state.instructionsDeviceType} exclusive onChange={handleInstructionsDeviceChange} aria-label="text alignment">
+              <ToggleButton value={"chrome"} aria-label="left aligned">Chrome</ToggleButton>
+              <ToggleButton value={"ios"} aria-label="right aligned">iOS</ToggleButton>
+            </ExpandingTabs>
+          </DialogTitle>
+          <DialogContent style={{color:"#ffffff", maxWidth: 512}}>
+
+            <DialogContentText id="alert-dialog-slide-description">
+              <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none",wordBreak:"break-all"}} target="_blank">Click or copy this link</a></p>
+              <div style={{display: (this.state.instructionsDeviceType == "chrome" ? "block" : "none")}}>
+                <p>1) Click the Install button next to Favorites <Icon style={{fontSize: 16, color:"#ffffff !important"}}>star_border</Icon></p>
+                <p>2) A small box should pop up, click Install</p>
+                <p>3) A new window should open which says "Once the app is installed, it should redirect automatically."</p>
+                <p>4) Close the window. A shortcut should be on your desktop or app menu.</p>
+                <p style={{fontWeight:600}}>The web app should now be accessible through the newly created shortcut.</p>
+              </div>
+              <div style={{display: (this.state.instructionsDeviceType == "ios" ? "block" : "none")}}>
+                <p>1) Click the Share <Icon style={{fontSize: 16, color:"#ffffff !important"}}>ios_share</Icon> button.</p>
+                <p>2) Click on "Add to Home Screen <Icon style={{fontSize: 16, color:"#ffffff !important"}}>add_box</Icon>" (may need to scroll)</p>
+                <p>3) Click <span style={{fontWeight:600}}>Add</span> at the top of the popup.</p>
+                <p style={{fontWeight:600}}>The web app should now be installed and on your home screen.</p>
+                <p style={{fontWeight:600, color:"#dd9800"}}>Unfortunately, there is no way to remove the navigation controls.</p>
+              </div>
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleInstructionsDialogClose} color="primary">Done</Button>
+          </DialogActions>
+        </Dialog>
+        <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'center' }}  open={this.state.showSnackbarMessage} autoHideDuration={6000} onClose={() => {this.setState({showSnackbarMessage: false})}}>
+          <Alert onClose={() => {this.setState({showSnackbarMessage: false})}} severity={this.state.snackbarSeverity}>
+            {this.state.snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </MuiThemeProvider></div>
     );
   }
 }
 
-/* Callbacks */
-function waitUntilGenerateFinished(callback){
+/**
+ * Performs a scan every 0.5 seconds until desired bool is true.
+ * Once the bool is true, the callback funtion is called and the scan stops.
+ *
+ * @param requestType the string name of the boolean to scan for in the didAttempt object
+ * @param callback the function to call when boolIsTrue becomes true
+ */
+function waitUntilTrue(requestType, callback) {
   var requestTimeout = window.setInterval(() => {
-    if (didAttemptGenerateApp){
+    if (didAttempt[requestType]) {
       callback();
       window.clearInterval(requestTimeout);
     }
   }, 500);
 }
 
-function waitUntilRequestFinished(callback){
-  var requestTimeout = window.setInterval(() => {
-    if (didAttemptFetchWebsiteData){
-      callback();
-      window.clearInterval(requestTimeout);
-    }
-  }, 500);
-}
-
-function waitUntilImageUploaded(callback){
-  var requestTimeout = window.setInterval(() => {
-    if (didAttemptUploadImage){
-      callback();
-      window.clearInterval(requestTimeout);
-    }
-  }, 500);
-}
-
-/* API Listener */
-export function REQUEST_LISTENER(type, success, data){
+/**
+ * Function that is called by when a web request (typically an API call)
+ * sent from Requests responds back. Primarily for configuring variables
+ * and updating UI based on data returned.
+ *
+ * @param type a string representing the type of API call
+ * @param success a boolean indicating whether the call was successful
+ * @param data the data returned by the API; typically a JSON object or plain string
+*/
+export function REQUEST_LISTENER(type, success, data) {
   console.log("Request " + type + " was " + (success ? "successful" : "unsuccessful") + " and returned data:");
   console.log(data);
 
-  if (type == "UNIQUE_ID"){
-    if (data.id != null){
+  if (type == "UNIQUE_ID") {
+    if (data.id != null) {
       uniqueID = data.id;
     }
     JSON_RETRIEVE("WEBSITE_METADATA",{url: savedUrl});
-  }else if (type == "WEBSITE_METADATA"){
-    if (success){
-      if (data.apple_touch_icon_exists == true){
+  } else if (type == "WEBSITE_METADATA") {
+    if (success) {
+      if (data.apple_touch_icon_exists == true) {
         imagePath = savedUrl + "/apple-touch-icon.png";
-      }else{
+      } else{
         imagePath = "../api/resources/webappify_default.png";
       }
-      if (data.title != null){
+      if (data.title != null) {
         titleValue = data.title;
-      }else{
+      } else{
         titleValue = "Web App";
       }
     }
     didFetchWebsiteData = true;
-    didAttemptFetchWebsiteData = true;
-  }else if (type == "SAVE_IMAGE"){
-    if (success){
-      if (data.success == true){
+    didAttempt.fetchWebsiteData = true;
+  } else if (type == "SAVE_IMAGE") {
+    if (success) {
+      if (data.success == true) {
         imagePath = "../api/tmp/" + uniqueID + ".png";
         didUploadImage = true;
       }
     }
-    didAttemptUploadImage = true;
-  }else if (type == "GENERATE_APP"){
-    if (success){
-      if (data.success == true){
+    didAttempt.uploadImage = true;
+  } else if (type == "GENERATE_APP") {
+    if (success) {
+      if (data.success == true) {
         generatedAppLink = data.link;
         didGenerateApp = true;
       }
+    } else if (developmentMode) {
+      generatedAppLink = "about:blank"
+      didGenerateApp = true;
     }
-    didAttemptGenerateApp = true;
+    didAttempt.generateApp = true;
   }
 }
