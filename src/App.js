@@ -96,12 +96,8 @@ export default class App extends React.Component {
       underline:{'&:after': {border: '2px solid red'  }}
     };
 
-    const handleUrlTextFieldChange = (event) => {
-      this.setState({urlTextField: event.target.value});
-    }
-
-    const handleTitleTextFieldChange = (event) => {
-      this.setState({appTitle: event.target.value});
+    const handleTitleTextFieldChange = (title) => {
+      this.setState({appTitle: title});
     }
 
     const handleUrlKeyPressed = (event) => {
@@ -110,9 +106,8 @@ export default class App extends React.Component {
       }
     }
 
-    const handleGoButtonClick = (event) => {
-      savedUrl = this.state.urlTextField;
-      this.setState({isCurrentlyFetching: true});
+    const handleGoButtonClick = (savedUrl) => {
+      this.setState({urlTextField: savedUrl, isCurrentlyFetching: true});
       didAttempt.fetchWebsiteData = false;
       JSON_RETRIEVE("UNIQUE_ID");
       waitUntilTrue("fetchWebsiteData", () => {
@@ -127,17 +122,10 @@ export default class App extends React.Component {
 
     const handleInstructionsButtonClick = (event) => {
       this.setState({instructionsDialogOpen: true});
-      //this.setState({showSnackbarMessage: true, snackbarMessage: "Not implemented yet!", snackbarSeverity: "warning"});
     }
 
     const handleInstructionsDialogClose = (event) => {
       this.setState({instructionsDialogOpen: false});
-    }
-
-    const handleInstructionsDeviceChange = (event,newAlignment) => {
-      if (newAlignment != null){
-        this.setState({instructionsDeviceType: newAlignment});
-      }
     }
 
     const handleCustomImageButtonClick = (event) => {
@@ -159,7 +147,7 @@ export default class App extends React.Component {
       }
     }
 
-    const handleGenerateButtonClick = (event) => {
+    const handleGenerateButtonClick = () => {
       if (didGenerateApp) {
         this.setState({showSnackbarMessage: true, snackbarMessage: "An app was already generated.", snackbarSeverity: "warning"});
       } else if (!didGenerateApp && this.state.isCurrentlyFetching) {
@@ -232,51 +220,135 @@ export default class App extends React.Component {
             <span style={{color:"#3f51b5",display:"inline"}}>{"/>"}</span>
           </p>
         </div>
-        <div style={{visibility: "hidden",height:0.01,display: (didGenerateApp ? "flex" : "none"),animation: (didGenerateApp ? "displayAndFadeToVisible 1s forwards 1.5s" : "")}}>
-          <div style={{flexGrow: 1}}></div>
-          <Paper style={{flexGrow: 4,margin: 16,padding:8, color: "#ffffff"}}>
-            <p style={{width:"100%",textAlign:"center",fontSize:20,fontWeight:500}}>Your web app was created successfully!</p>
-            <div style={{width:"100%",display:"flex"}}>
-              <div style={{flexGrow: 1}}></div>
-              <Button onClick={handleInstructionsButtonClick} variant="contained" color="primary" style={{flexGrow: 1, marginTop:8, marginBottom: 8}}>How to Install</Button>
-              <div style={{flexGrow: 1}}></div>
-            </div>
-            <p style={{width:"100%",textAlign:"center",fontSize:16}}>Alternatively, you can click or copy & paste the link below:</p>
-            <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none",wordBreak:"break-all"}} target="_blank">{generatedAppLink}</a></p>
-          </Paper>
-          <div style={{flexGrow: 1}}></div>
-        </div>
-        <div style={{flexGrow: 1,display:"flex",maxHeight:96}}>
-          <div style={{flexGrow: 1}}></div>
-          <div style={{flexGrow: 2, paddingTop: (this.state.didFinishTypingAnimation ? 0 : 64),opacity: (didGenerateApp ? 1 : 0),animation: (this.state.didFinishTypingAnimation ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "fadeToVisible 1s forwards 0.5s") : "")}}>
-            <TextField inputProps={{autoComplete:"off",type:"url"}} autoComplete="off" onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.state.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
-            <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.state.didContinueToGenerate || this.state.isCurrentlyFetching ? "none" : "inline-flex")}}>
-              <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
-            </IconButton>
-            <CircularProgress color="background" style={{flexGrow: 1,width:32,height:32,padding:16,marginLeft:-64,position:"absolute",display: ((!this.state.didContinueToGenerate && this.state.isCurrentlyFetching) ? "inline-flex" : "none")}}/>
+        <AppGeneratedView
+          onInstructionsButtonClick={handleInstructionsButtonClick}/>
+        <WebsiteURLView
+          onUrlEntered={handleGoButtonClick}
+          didFinishTypingAnimation={this.state.didFinishTypingAnimation}
+          didContinueToGenerate={this.state.didContinueToGenerate}
+          isCurrentlyFetching={this.state.isCurrentlyFetching}/>
+        <AppConfigurationView
+          appTitle={this.state.appTitle}
+          didContinueToGenerate={this.state.didContinueToGenerate}
+          shouldRoundCorners={this.state.shouldRoundCorners}
+          hasCustomImage={this.state.hasCustomImage}
+          customImageResult={this.state.customImageResult}
+          onAppTitleChange={handleTitleTextFieldChange}
+          onRoundCornersToggle={handleRoundCornersSwitchChange}
+          onCustomImageButtonClick={handleCustomImageButtonClick}
+          onGenerateButtonClick={handleGenerateButtonClick}/>
+        <Dialog aria-labelledby="simple-dialog-title" open={this.state.didContinueToGenerate && this.state.isCurrentlyFetching}>
+          <div style={{display:"flex"}}>
+            <DialogTitle style={{flex:"1 0 auto",color:"#ffffff"}} id="simple-dialog-title">{this.state.fetchMessage}</DialogTitle>
+            <CircularProgress style={{flex: "1 0 auto", padding: 16, width:32,height:32}}/>
           </div>
-          <div style={{flexGrow: 1}}></div>
-        </div>
-        <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.state.didContinueToGenerate ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "flexToFour 1s") : ""),flex: (this.state.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.state.didContinueToGenerate ? "visible" : "hidden")}}>
-          <div style={{display: "flex", flexGrow: 1}}>
-            <div style={{flexGrow: 1}}></div>
-            <div style={{flexGrow: 2,display:"flex",flexFlow:"column"}}>
+        </Dialog>
+        <InstallInstructionsDialog
+          instructionsDialogOpen={this.state.instructionsDialogOpen}
+          onDialogClose={handleInstructionsDialogClose}/>
+        <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'center' }}  open={this.state.showSnackbarMessage} autoHideDuration={6000} onClose={() => {this.setState({showSnackbarMessage: false})}}>
+          <Alert onClose={() => {this.setState({showSnackbarMessage: false})}} severity={this.state.snackbarSeverity}>
+            {this.state.snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </MuiThemeProvider></div>
+    );
+  }
+}
 
+class WebsiteURLView extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      urlTextField: "https://",
+    }
+  }
+
+  render() {
+
+    const handleUrlKeyPressed = (event) => {
+      if(event.key === 'Enter') {
+        handleGoButtonClick(event);
+      }
+    }
+
+    const handleUrlTextFieldChange = (event) => {
+      this.setState({urlTextField: event.target.value});
+    }
+
+    const handleGoButtonClick = (event) => {
+      if (this.props.onUrlEntered != null) {
+        this.props.onUrlEntered(this.state.urlTextField);
+      }
+    }
+
+    return (
+      <div style={{flexGrow: 1,display:"flex",maxHeight:96}}>
+        <div style={{flexGrow: 1}}></div>
+        <div style={{flexGrow: 2, paddingTop: (this.props.didFinishTypingAnimation ? 0 : 64),opacity: (didGenerateApp ? 1 : 0),animation: (this.props.didFinishTypingAnimation ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "fadeToVisible 1s forwards 0.5s") : "")}}>
+          <TextField inputProps={{autoComplete:"off",type:"url"}} autoComplete="off" onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.props.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
+          <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.props.didContinueToGenerate || this.props.isCurrentlyFetching ? "none" : "inline-flex")}}>
+            <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
+          </IconButton>
+          <CircularProgress color="background" style={{flexGrow: 1,width:32,height:32,padding:16,marginLeft:-64,position:"absolute",display: ((!this.props.didContinueToGenerate && this.props.isCurrentlyFetching) ? "inline-flex" : "none")}}/>
+        </div>
+        <div style={{flexGrow: 1}}></div>
+      </div>
+    );
+  }
+}
+
+class AppConfigurationView extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    const handleTitleTextFieldChange = (event) => {
+      if (this.props.onAppTitleChange != null) {
+        this.props.onAppTitleChange(event.target.value);
+      }
+    }
+
+    const handleRoundCornersSwitchChange = (event) => {
+      if (this.props.onRoundCornersToggle != null) {
+        this.props.onRoundCornersToggle();
+      }
+    }
+
+    const handleCustomImageButtonClick = (event) => {
+      if (this.props.onCustomImageButtonClick != null) {
+        this.props.onCustomImageButtonClick(event);
+      }
+    }
+
+    const handleGenerateButtonClick = (event) => {
+      if (this.props.onGenerateButtonClick != null) {
+        this.props.onGenerateButtonClick();
+      }
+    }
+
+    return (
+      <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.props.didContinueToGenerate ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "flexToFour 1s") : ""),flex: (this.props.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.props.didContinueToGenerate ? "visible" : "hidden")}}>
+        <div style={{display: "flex", flexGrow: 1}}>
+          <div style={{flexGrow: 1}}></div>
+            <div style={{flexGrow: 2,display:"flex",flexFlow:"column"}}>
             <Paper style={{display:"flex",flexGrow: 0,height:"fit-content",backgroundColor:"#222225 !important"}}>
               <div style={{flexGrow: 2,marginRight:16,display:"flex"}}>
                 <div style={{flexGrow: 1,width:0,height:"fit-content",marginRight:16}}>
-                  <img style={{borderRadius: (this.state.shouldRoundCorners ? "20%" : "0%"),float:"left",maxWidth:"100%"}} src={this.state.hasCustomImage ? this.state.customImageResult : imagePath}/>
+                  <img style={{borderRadius: (this.props.shouldRoundCorners ? "20%" : "0%"),float:"left",maxWidth:"100%"}} src={this.props.hasCustomImage ? this.props.customImageResult : imagePath}/>
                 </div>
               </div>
               <div style={{flexGrow: 2}}>
                 <div style={{display:"flex"}}>
                   <div style={{flexGrow: 1}}></div>
-                  <TextField onChange={handleTitleTextFieldChange} style={{flexGrow: 2,color:"#ffffff",width:"100%"}} value={this.state.appTitle}></TextField>
+                  <TextField onChange={handleTitleTextFieldChange} style={{flexGrow: 2,color:"#ffffff",width:"100%"}} value={this.props.appTitle}></TextField>
                   <div style={{flexGrow: 1}}></div>
                 </div>
                 <FormControlLabel
                   style={{marginTop:16}}
-                  control={<Switch checked={this.state.shouldRoundCorners} onChange={handleRoundCornersSwitchChange} name="roundCornersSwitch" color="primary"/>}
+                  control={<Switch checked={this.props.shouldRoundCorners} onChange={handleRoundCornersSwitchChange} name="roundCornersSwitch" color="primary"/>}
                   label={<span style={{color:"#ffffff"}}>Round corners</span>}>
                 </FormControlLabel>
                 <div style={{width:"100%"}}>
@@ -288,55 +360,99 @@ export default class App extends React.Component {
               </div>
             </Paper>
             <div style={{flexGrow: 1}}></div>
+          </div>
 
-            </div>
+          <div style={{flexGrow: 1}}></div>
+        </div>
+      </div>
+    );
+  }
+}
 
+class AppGeneratedView extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    const handleInstructionsButtonClick = (event) => {
+        if (this.props.onInstructionsButtonClick != null) {
+          this.props.onInstructionsButtonClick(event);
+        }
+    }
+
+    return (
+      <div style={{visibility: "hidden",height:0.01,display: (didGenerateApp ? "flex" : "none"),animation: (didGenerateApp ? "displayAndFadeToVisible 1s forwards 1.5s" : "")}}>
+        <div style={{flexGrow: 1}}></div>
+        <Paper style={{flexGrow: 4,margin: 16,padding:8, color: "#ffffff"}}>
+          <p style={{width:"100%",textAlign:"center",fontSize:20,fontWeight:500}}>Your web app was created successfully!</p>
+          <div style={{width:"100%",display:"flex"}}>
+            <div style={{flexGrow: 1}}></div>
+            <Button onClick={handleInstructionsButtonClick} variant="contained" color="primary" style={{flexGrow: 1, marginTop:8, marginBottom: 8}}>How to Install</Button>
             <div style={{flexGrow: 1}}></div>
           </div>
-        </div>
-        <Dialog aria-labelledby="simple-dialog-title" open={this.state.didContinueToGenerate && this.state.isCurrentlyFetching}>
-          <div style={{display:"flex"}}>
-            <DialogTitle style={{flex:"1 0 auto",color:"#ffffff"}} id="simple-dialog-title">{this.state.fetchMessage}</DialogTitle>
-            <CircularProgress style={{flex: "1 0 auto", padding: 16, width:32,height:32}}/>
-          </div>
-        </Dialog>
-        <Dialog open={this.state.instructionsDialogOpen} onClose={handleInstructionsDialogClose} aria-labelledby={"alert-dialog-title"}>
-          <DialogTitle id="alert-dialog-slide-title">{"Install Web App"}
-            <ExpandingTabs value={this.state.instructionsDeviceType} exclusive onChange={handleInstructionsDeviceChange} aria-label="text alignment">
-              <ToggleButton value={"chrome"} aria-label="left aligned">Chrome</ToggleButton>
-              <ToggleButton value={"ios"} aria-label="right aligned">iOS</ToggleButton>
-            </ExpandingTabs>
-          </DialogTitle>
-          <DialogContent style={{color:"#ffffff", maxWidth: 512}}>
+          <p style={{width:"100%",textAlign:"center",fontSize:16}}>Alternatively, you can click or copy & paste the link below:</p>
+          <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none",wordBreak:"break-all"}} target="_blank">{generatedAppLink}</a></p>
+        </Paper>
+        <div style={{flexGrow: 1}}></div>
+      </div>
+    );
+  }
+}
 
-            <DialogContentText id="alert-dialog-slide-description">
-              <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none",wordBreak:"break-all"}} target="_blank">Click or copy this link</a></p>
-              <div style={{display: (this.state.instructionsDeviceType == "chrome" ? "block" : "none")}}>
-                <p>1) Click the Install button next to Favorites <Icon style={{fontSize: 16, color:"#ffffff !important"}}>star_border</Icon></p>
-                <p>2) A small box should pop up, click Install</p>
-                <p>3) A new window should open which says "Once the app is installed, it should redirect automatically."</p>
-                <p>4) Close the window. A shortcut should be on your desktop or app menu.</p>
-                <p style={{fontWeight:600}}>The web app should now be accessible through the newly created shortcut.</p>
-              </div>
-              <div style={{display: (this.state.instructionsDeviceType == "ios" ? "block" : "none")}}>
-                <p>1) Click the Share <Icon style={{fontSize: 16, color:"#ffffff !important"}}>ios_share</Icon> button.</p>
-                <p>2) Click on "Add to Home Screen <Icon style={{fontSize: 16, color:"#ffffff !important"}}>add_box</Icon>" (may need to scroll)</p>
-                <p>3) Click <span style={{fontWeight:600}}>Add</span> at the top of the popup.</p>
-                <p style={{fontWeight:600}}>The web app should now be installed and on your home screen.</p>
-                <p style={{fontWeight:600, color:"#dd9800"}}>Unfortunately, there is no way to remove the navigation controls.</p>
-              </div>
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleInstructionsDialogClose} color="primary">Done</Button>
-          </DialogActions>
-        </Dialog>
-        <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'center' }}  open={this.state.showSnackbarMessage} autoHideDuration={6000} onClose={() => {this.setState({showSnackbarMessage: false})}}>
-          <Alert onClose={() => {this.setState({showSnackbarMessage: false})}} severity={this.state.snackbarSeverity}>
-            {this.state.snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </MuiThemeProvider></div>
+class InstallInstructionsDialog extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      instructionsDeviceType: "chrome",
+    }
+  }
+
+  render() {
+
+    const handleInstructionsDeviceChange = (event,newAlignment) => {
+      if (newAlignment != null){
+        this.setState({instructionsDeviceType: newAlignment});
+      }
+    }
+
+    const handleInstructionsDialogClose = () => {
+      if (this.props.onDialogClose != null) {
+        this.props.onDialogClose();
+      }
+    }
+
+    return (
+      <Dialog open={this.props.instructionsDialogOpen} onClose={handleInstructionsDialogClose} aria-labelledby={"alert-dialog-title"}>
+        <DialogTitle id="alert-dialog-slide-title">{"Install Web App"}
+          <ExpandingTabs value={this.state.instructionsDeviceType} exclusive onChange={handleInstructionsDeviceChange} aria-label="text alignment">
+            <ToggleButton value={"chrome"} aria-label="left aligned">Chrome</ToggleButton>
+            <ToggleButton value={"ios"} aria-label="right aligned">iOS</ToggleButton>
+          </ExpandingTabs>
+        </DialogTitle>
+        <DialogContent style={{color:"#ffffff", maxWidth: 512}}>
+          <DialogContentText id="alert-dialog-slide-description">
+            <p style={{width:"100%",textAlign:"center"}}><a href={generatedAppLink} style={{fontSize:16, color:"#6f83dd",textDecoration:"none",wordBreak:"break-all"}} target="_blank">Click or copy this link</a></p>
+            <div style={{display: (this.state.instructionsDeviceType == "chrome" ? "block" : "none")}}>
+              <p>1) Click the Install button next to Favorites <Icon style={{fontSize: 16, color:"#ffffff !important"}}>star_border</Icon></p>
+              <p>2) A small box should pop up, click Install</p>
+              <p>3) A new window should open which says "Once the app is installed, it should redirect automatically."</p>
+              <p>4) Close the window. A shortcut should be on your desktop or app menu.</p>
+              <p style={{fontWeight:600}}>The web app should now be accessible through the newly created shortcut.</p>
+            </div>
+            <div style={{display: (this.state.instructionsDeviceType == "ios" ? "block" : "none")}}>
+              <p>1) Click the Share <Icon style={{fontSize: 16, color:"#ffffff !important"}}>ios_share</Icon> button.</p>
+              <p>2) Click on "Add to Home Screen <Icon style={{fontSize: 16, color:"#ffffff !important"}}>add_box</Icon>" (may need to scroll)</p>
+              <p>3) Click <span style={{fontWeight:600}}>Add</span> at the top of the popup.</p>
+              <p style={{fontWeight:600}}>The web app should now be installed and on your home screen.</p>
+              <p style={{fontWeight:600, color:"#dd9800"}}>Unfortunately, there is no way to remove the navigation controls.</p>
+            </div>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleInstructionsDialogClose} color="primary">Done</Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }
