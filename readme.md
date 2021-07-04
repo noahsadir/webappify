@@ -27,5 +27,6 @@ Turn any website into a Progressive Web App!
   ```
 - Copy src, public, api, apps folders from the repository into the current directory, replacing any existing files.
 - Copy the package.json file into the current directory.
+- Make sure to update folder permissions if necessary.
 
 You should now be able to build the app.

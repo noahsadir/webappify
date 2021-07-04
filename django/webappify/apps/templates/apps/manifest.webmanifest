@@ -1,0 +1,29 @@
+{
+  "short_name": "{{ app_title }}",
+  "name": "{{ app_title }}",
+  "description": "Web app for {{ app_title }}",
+  "icons": [
+    {
+      "src": "main-icon.png",
+      "type": "image/png",
+      "sizes": "1024x1024"
+    },
+    {
+      "src": "main-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192","purpose": "any maskable"
+    },
+    {
+      "src": "main-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/apps/{{ app_id }}/index.html",
+  "background_color": "{{ app_background }}",
+  "display": "standalone",
+  "scope": "../../apps/{{ app_id }}/",
+  "theme_color": "{{ app_theme }}",
+  "shortcuts":[]
+}

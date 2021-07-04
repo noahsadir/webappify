@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="HandheldFriendly" content="true" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="{{ app_theme }}">
+    <title>{{ app_title }}</title>
+  </head>
+  <body style="background-color:{{ app_background }};color:#ffffff;font-family:sans-serif">
+    <div style="display:flex;flex-flow:column;height:100vh">
+      <div style="flex: 1 0 auto"></div>
+      <div style="flex: 1 0 auto;display:flex;">
+        <div style="flex: 1 0 auto"></div>
+        <div style="flex: 1 0 auto;width: 100%">
+          <p style="text-align:center">Once the app is installed, it should redirect automatically.</p>
+          <p style="text-align:center;margin:24px">Otherwise, click the link below:</p>
+          <a style="width: 128px;padding: 16px;border-radius: 8px;border: 1px solid #aaaaaa; background-color: {{ app_theme }};text-decoration: none;color: #FFFFFF;margin-top:8px;margin-left:calc(50% - 64px)" href="{{ app_link }}">Go to website</a>
+        </div>
+        <div style="flex: 1 0 auto"></div>
+      </div>
+      <div style="flex: 1 0 auto"></div>
+    </div>
+    <script>
+      if("serviceWorker" in navigator){
+        navigator.serviceWorker.register("worker.js").then(function() {
+          console.log("Service Worker Registered");
+        });
+      }
+      let dp;
+      window.addEventListener("beforeinstallprompt", (e) => {
+        console.log("should be installable");
+        e.preventDefault();dp = e;
+      });
+      window.addEventListener("appinstalled", (evt) => {
+        console.log("INSTALL: Success");
+      });
+      if (window.matchMedia("(display-mode: standalone)").matches) {
+        console.log("Installed");
+        window.location.replace("{{ app_link }}");
+      }
+    </script>
+  </body>
+</html>
