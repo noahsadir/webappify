@@ -40,6 +40,10 @@ The back-end is written with Django and consists of two parts: a REST API and co
 #### API
 
 The API handles app generation and assists with gathering data necessary for generation.
+The following API calls are accessible from the following url:
+```
+https://webappify.noahsadir.io/api/
+```
 
 - ```unique_id```
 
@@ -62,6 +66,11 @@ Attempts to retrieve a title and icon from the specified website.
 Generates a web app associated with a unique ID.
 
 #### Content Delivery
+
+The following files can be accessed from the following URL:
+```
+https://webappify.noahsadir.io/apps/UNIQUE_APP_ID/
+```
 
 When a generated app link is visited, Django dynamically serves content based on the information stored to the database.
 
