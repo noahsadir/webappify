@@ -109,7 +109,9 @@ A 32x32 ICO file which serves as the website favicon.
 
 ## Notes
 
-The server configuration for this is quite complicated. In order for Django and React to work simultaneously, Apache needs to be configured so that Django is accessible through the domain root and the React app is accessible through a specific subdirectory, such as ```home/```.
+The server configuration for this is quite complicated.
+
+In order for Django and React to work simultaneously, Apache needs to be configured so that Django is accessible through the domain root and the React app is accessible through a specific subdirectory, such as ```home/```.
 
 Django needs the following libraries installed, preferably in a virtual environment:
 ```
