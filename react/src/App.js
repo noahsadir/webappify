@@ -56,7 +56,7 @@ var didAttempt = {
 };
 
 var savedUrl = "";
-var imagePath = "../api/resources/webappify_default.png";
+var imagePath = "https://webappify.noahsadir.io/static/webappify_default.png";
 var titleValue = "Web App";
 var uniqueID = "null";
 var generatedAppLink = "https://www.example.com";
@@ -106,15 +106,16 @@ export default class App extends React.Component {
       }
     }
 
-    const handleGoButtonClick = (savedUrl) => {
-      this.setState({urlTextField: savedUrl, isCurrentlyFetching: true});
+    const handleGoButtonClick = (url) => {
+      savedUrl = url;
+      this.setState({urlTextField: url, isCurrentlyFetching: true});
       didAttempt.fetchWebsiteData = false;
       JSON_RETRIEVE("UNIQUE_ID");
       waitUntilTrue("fetchWebsiteData", () => {
         this.setState({isCurrentlyFetching: false});
         if (didFetchWebsiteData) {
-          this.setState({state: this.state,didContinueToGenerate: true,appTitle: titleValue});
-        } else{
+          this.setState({state: this.state,didContinueToGenerate: true, appTitle: titleValue});
+        } else {
           this.setState({showSnackbarMessage: true, snackbarMessage: "An unexpected error occurred.", snackbarSeverity: "error"});
         }
       });
@@ -140,7 +141,6 @@ export default class App extends React.Component {
             this.setState({hasCustomImage: true, customImageResult: readerEvent.target.result, customImage: event.target.files[0], showSnackbarMessage: true, snackbarMessage: "Added custom image.", snackbarSeverity: "success"});
           };
           reader.readAsDataURL(event.target.files[0]);
-
         } else{
           this.setState({showSnackbarMessage: true, snackbarMessage: "Image must be " + this.state.maxImageSizeDisplay + " or less.", snackbarSeverity: "error"});
         }
@@ -156,7 +156,39 @@ export default class App extends React.Component {
         //No app has been generated yet, so do it now
         didAttempt.generateApp = false;
         this.setState({isCurrentlyFetching: true});
+        var customImage = this.state.customImage;
 
+        if (this.state.hasCustomImage) {
+          JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: this.state.customImage});
+        } else {
+          JSON_RETRIEVE("SAVE_IMAGE_URL",{id: uniqueID, image_url: imagePath});
+        }
+
+        waitUntilTrue("uploadImage", () => {
+          //this.setState({showSnackbarMessage: true, snackbarMessage: "Successfully uploaded image!", snackbarSeverity: "success"});
+          if (didUploadImage) {
+            //Image successfully uploaded
+            JSON_RETRIEVE("GENERATE_APP",{
+              id: uniqueID,
+              link: savedUrl,
+              name: this.state.appTitle,
+              rounded: this.state.shouldRoundCorners ? true : false
+            });
+            waitUntilTrue("generateApp", () =>{
+              this.setState({isCurrentlyFetching: false});
+              if (didGenerateApp) {
+                //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app WITH custom icon", snackbarSeverity: "success"});
+              } else{
+                this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
+              }
+            });
+          } else{
+            this.setState({isCurrentlyFetching: false});
+            this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
+          }
+        });
+
+        /*
         if (this.state.hasCustomImage) {
           JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: this.state.customImage});
           waitUntilTrue("uploadImage", () => {
@@ -167,8 +199,7 @@ export default class App extends React.Component {
                 id: uniqueID,
                 link: savedUrl,
                 name: this.state.appTitle,
-                rounded: this.state.shouldRoundCorners ? "1" : "0",
-                siteimg: didUploadImage ? "false" : "true",
+                rounded: this.state.shouldRoundCorners ? true : false
               });
               waitUntilTrue("generateApp", () =>{
                 this.setState({isCurrentlyFetching: false});
@@ -184,22 +215,25 @@ export default class App extends React.Component {
             }
           });
         } else{
-          JSON_RETRIEVE("GENERATE_APP",{
-            id: uniqueID,
-            link: savedUrl,
-            name: this.state.appTitle,
-            rounded: this.state.shouldRoundCorners ? "1" : "0",
-            siteimg: didUploadImage ? "false" : "true",
-          });
-          waitUntilTrue("generateApp", () =>{
-            this.setState({isCurrentlyFetching: false});
-            if (didGenerateApp) {
-              //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app W/O custom icon", snackbarSeverity: "success"});
-            } else{
-              this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
-            }
+          JSON_RETRIEVE("SAVE_IMAGE_URL",{id: uniqueID, url: imagePath});
+          waitUntilTrue("uploadImage", () => {
+            JSON_RETRIEVE("GENERATE_APP",{
+              id: uniqueID,
+              link: savedUrl,
+              name: this.state.appTitle,
+              rounded: this.state.shouldRoundCorners ? true : false
+            });
+            waitUntilTrue("generateApp", () =>{
+              this.setState({isCurrentlyFetching: false});
+              if (didGenerateApp) {
+                //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app W/O custom icon", snackbarSeverity: "success"});
+              } else{
+                this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
+              }
+            });
           });
         }
+        */
       }
     }
 
@@ -493,11 +527,12 @@ export function REQUEST_LISTENER(type, success, data) {
     JSON_RETRIEVE("WEBSITE_METADATA",{url: savedUrl});
   } else if (type == "WEBSITE_METADATA") {
     if (success) {
-      if (data.apple_touch_icon_exists == true) {
-        imagePath = savedUrl + "/apple-touch-icon.png";
+      if (data.icon_url != null) {
+        imagePath = data.icon_url;
       } else{
-        imagePath = "../api/resources/webappify_default.png";
+        imagePath = "https://webappify.noahsadir.io/static/webappify_default.png";
       }
+
       if (data.title != null) {
         titleValue = data.title;
       } else{
@@ -506,10 +541,10 @@ export function REQUEST_LISTENER(type, success, data) {
     }
     didFetchWebsiteData = true;
     didAttempt.fetchWebsiteData = true;
-  } else if (type == "SAVE_IMAGE") {
+  } else if (type == "SAVE_IMAGE" || type == "SAVE_IMAGE_URL") {
     if (success) {
       if (data.success == true) {
-        imagePath = "../api/tmp/" + uniqueID + ".png";
+        //imagePath = "../api/tmp/" + uniqueID + ".png";
         didUploadImage = true;
       }
     }

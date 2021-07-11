@@ -21,20 +21,34 @@ export function JSON_RETRIEVE(jobID, args){
 
     //Determine URL to send request to and the data to send with it.
     if (jobID == "UNIQUE_ID"){
-      urlValue = "../api/unique_id.php";
+      urlValue = "../api/unique_id";
     }else if (jobID == "SAVE_IMAGE"){
       var formData = new FormData();
-      formData.append('id', args.id);
+      formData.append('app_id', args.id);
       formData.append('image',args.image);
       fetchDetails = {
         method: "POST",
         body: formData,
       };
-      urlValue = "../api/save_image.php";
+      urlValue = "../api/upload_image";
+    }else if (jobID == "SAVE_IMAGE_URL"){
+      urlValue = "../api/upload_image_from_url?app_id=" + args.id + "&image_url=" + args.image_url;
     }else if (jobID == "WEBSITE_METADATA"){
-      urlValue = "../api/website_metadata.php?url=" + args.url;
+      urlValue = "../api/website_metadata?url=" + args.url;
     }else if (jobID == "GENERATE_APP"){
-      urlValue = "../api/generate_app.php?" + "id=" + args.id + "&link=" + args.link + "&name=" + args.name + "&rounded=" + args.rounded + "&siteimg=" + args.siteimg;
+      var formData = new FormData();
+      formData.append('app_id', args.id);
+      formData.append('app_title', args.name);
+      formData.append('app_link', args.link);
+      formData.append('app_background', '#000000');
+      formData.append('app_theme', '#222222');
+      formData.append('image_is_rounded', args.rounded);
+      fetchDetails = {
+        method: "POST",
+        body: formData,
+      };
+      urlValue = "../api/generate_app"
+      //urlValue = "../api/generate_app.php?" + "id=" + args.id + "&link=" + args.link + "&name=" + args.name + "&rounded=" + args.rounded + "&siteimg=" + args.siteimg;
     }
 
     console.log("fetching data from " + urlValue);
