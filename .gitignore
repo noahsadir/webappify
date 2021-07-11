@@ -2,3 +2,5 @@
 build
 legacy
 backend_old
+__pycache__
+migrations
