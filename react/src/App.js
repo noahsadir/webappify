@@ -187,53 +187,6 @@ export default class App extends React.Component {
             this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
           }
         });
-
-        /*
-        if (this.state.hasCustomImage) {
-          JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: this.state.customImage});
-          waitUntilTrue("uploadImage", () => {
-            //this.setState({showSnackbarMessage: true, snackbarMessage: "Successfully uploaded image!", snackbarSeverity: "success"});
-            if (didUploadImage) {
-              //Image successfully uploaded
-              JSON_RETRIEVE("GENERATE_APP",{
-                id: uniqueID,
-                link: savedUrl,
-                name: this.state.appTitle,
-                rounded: this.state.shouldRoundCorners ? true : false
-              });
-              waitUntilTrue("generateApp", () =>{
-                this.setState({isCurrentlyFetching: false});
-                if (didGenerateApp) {
-                  //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app WITH custom icon", snackbarSeverity: "success"});
-                } else{
-                  this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
-                }
-              });
-            } else{
-              this.setState({isCurrentlyFetching: false});
-              this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
-            }
-          });
-        } else{
-          JSON_RETRIEVE("SAVE_IMAGE_URL",{id: uniqueID, url: imagePath});
-          waitUntilTrue("uploadImage", () => {
-            JSON_RETRIEVE("GENERATE_APP",{
-              id: uniqueID,
-              link: savedUrl,
-              name: this.state.appTitle,
-              rounded: this.state.shouldRoundCorners ? true : false
-            });
-            waitUntilTrue("generateApp", () =>{
-              this.setState({isCurrentlyFetching: false});
-              if (didGenerateApp) {
-                //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app W/O custom icon", snackbarSeverity: "success"});
-              } else{
-                this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
-              }
-            });
-          });
-        }
-        */
       }
     }
 

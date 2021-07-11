@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from apps.models import WebApp
 from .forms import CreateWebAppForm, ImageUploadForm
-from PIL import Image
+from PIL import Image, ImageDraw
 import uuid
 import os
 import favicon
@@ -31,9 +31,7 @@ def generate(request):
     form = CreateWebAppForm()
     return render(request, 'generator/index.html', {'form': form})
 
-def availableApps(request):
-    return JsonResponse({'success': False, 'message': 'It works, but not really.'})
-
+@csrf_exempt
 def uploadImage(request):
     projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 
@@ -68,7 +66,6 @@ def uploadImageUrl(request):
             return JsonResponse({'success': False, 'message': 'Image must be under 10 MB.'})
     return JsonResponse({'success': False, 'message': 'Unable to upload image.'})
 
-
 def uniqueID(request):
     appID = str(uuid.uuid4())
     return JsonResponse({'id': appID})
@@ -96,6 +93,9 @@ def websiteMetadata(request):
         return JsonResponse({'success': True, 'icon_url': preferredIcon, 'title': websiteTitle})
     return JsonResponse({'success': False, 'message': 'Invalid parameters.'})
 
+def availableApps(request):
+    return JsonResponse({'success': False, 'message': 'It works, but not really.'})
+
 # Create a database entry for the app and generate icon set
 def saveAndGenerateWebApp(cleanedData):
     appID = cleanedData['app_id']
@@ -110,13 +110,36 @@ def saveAndGenerateWebApp(cleanedData):
         return webAppObject.data()
     return None
 
+# Round corners of image; solution found on SO
+# https://stackoverflow.com/questions/11287402/how-to-round-corner-a-logo-without-white-backgroundtransparent-on-it-using-pi
+def roundCorners(im, rad):
+    circle = Image.new('L', (rad * 2, rad * 2), 0)
+    draw = ImageDraw.Draw(circle)
+    draw.ellipse((0, 0, rad * 2, rad * 2), fill=255)
+    alpha = Image.new('L', im.size, 255)
+    w, h = im.size
+    alpha.paste(circle.crop((0, 0, rad, rad)), (0, 0))
+    alpha.paste(circle.crop((0, rad, rad, rad * 2)), (0, h - rad))
+    alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
+    alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
+    im.putalpha(alpha)
+    return im
+
 # Generate app icons and save to server
 def createIcons(appID, shouldRoundCorners):
     projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 
-    pilIcon = Image.open(projectRoot + "/icons/tmp/" + appID)
+    pilIcon = Image.open(projectRoot + "/icons/tmp/" + appID).convert('RGB')
     pilIcon = pilIcon.resize((1024, 1024))
     pilIcon.save(projectRoot + "/icons/image_1024_original/" + appID, format="png", optimize=True)
+
+    # Round image corners and apply shadow mask
+    if shouldRoundCorners:
+        pilIcon = roundCorners(pilIcon, 190)
+        pilIcon = pilIcon.resize((827, 827))
+        imageMask = Image.open(projectRoot + "/icons/mask.png")
+        imageMask.paste(pilIcon, (98, 98), pilIcon)
+        pilIcon = imageMask
 
     pilIcon.save(projectRoot + "/icons/image_1024/" + appID, format="png", optimize=True)
     pilIcon = pilIcon.resize((512, 512))
