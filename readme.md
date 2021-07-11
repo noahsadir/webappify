@@ -1,6 +1,6 @@
 # Webappify
 
-Turn any website into a Progressive Web App!
+Turn any website into a standalone web app!
 
 ## How to use
 
@@ -40,6 +40,7 @@ The back-end is written with Django and consists of two parts: a REST API and co
 #### API
 
 The API handles app generation and assists with gathering data necessary for generation.
+
 The following API calls are accessible from the following url:
 ```
 https://webappify.noahsadir.io/api/
@@ -68,6 +69,7 @@ Generates a web app associated with a unique ID.
 #### Content Delivery
 
 With the help of templates, Django dynamically serves content based on the information specific to the web app.
+
 The following files are accessible from the following URL:
 ```
 https://webappify.noahsadir.io/apps/UNIQUE_APP_ID/
@@ -104,3 +106,21 @@ A 1024x1024 PNG file which serves as the icon for Apple devices.
 - ```favicon.ico```
 
 A 32x32 ICO file which serves as the website favicon.
+
+## Notes
+
+The server configuration for this is quite complicated. In order for Django and React to work simultaneously, Apache needs to be configured so that Django is accessible through the domain root and the React app is accessible through a specific subdirectory, such as ```home/```.
+
+Django needs the following libraries installed, preferably in a virtual environment:
+```
+pillow
+bs4
+requests
+```
+
+React needs the following packages installed:
+```
+react-typing-animation
+@material-ui/core
+@material-ui/lab
+```
