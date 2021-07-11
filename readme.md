@@ -67,24 +67,23 @@ Generates a web app associated with a unique ID.
 
 #### Content Delivery
 
-The following files can be accessed from the following URL:
+With the help of templates, Django dynamically serves content based on the information specific to the web app.
+The following files are accessible from the following URL:
 ```
 https://webappify.noahsadir.io/apps/UNIQUE_APP_ID/
 ```
 
-When a generated app link is visited, Django dynamically serves content based on the information stored to the database.
-
 - ```index.html```
 
-The main page of the app. This page is what the user first sees when the link is visited and automatically redirects to the desired website when the app is installed.
+This page is what the user first sees when the link is visited. It redirects to the desired website after the app is installed.
 
 - ```worker.js```
 
-This is the service worker which is required in order to make the app installable. Since this web app is just a wrapper for a website, not much needs to be done besides basic caching and versioning.
+This is the service worker which is required in order to make the app installable. Since this web app is just a wrapper for a website, not much needs to be done besides basic caching and version control.
 
 - ```manifest.webmanifest```
 
-Also required for PWA qualification, the manifest contains all of the app's metadata and helps locate all of the required assets, such as the start point, service worker, and app icons.
+Also required for PWA qualification, the manifest contains all of the app's metadata and locates all of the required assets, such as the starting point, service worker, and app icons.
 
 - ```main-icon.png```
 
