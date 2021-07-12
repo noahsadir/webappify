@@ -44,21 +44,26 @@ const ExpandingTabs = withStyles((theme) => ({
 
 var developmentMode = false;
 
-var didFetchWebsiteData = false;
-var didUploadImage = false;
-var didGenerateApp = false;
-
-
 var didAttempt = {
   fetchWebsiteData: false,
   uploadImage: false,
   generateApp: false,
 };
 
-var savedUrl = "";
-var imagePath = "https://webappify.noahsadir.io/static/webappify_default.png";
-var titleValue = "Web App";
-var uniqueID = "null";
+var wasSuccess = {
+  fetchWebsiteData: false,
+  uploadImage: false,
+  generateApp: false,
+}
+
+var appToGenerate = {
+  id: null,
+  name: "Web App",
+  link: "https://",
+  rounded: true,
+}
+
+var imageUrlToUpload = "https://webappify.noahsadir.io/static/webappify_default.png";
 var generatedAppLink = "https://www.example.com";
 
 /**
@@ -69,8 +74,6 @@ export default class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      urlTextField: "https://",
-      appTitle: "Web App",
       didContinueToGenerate: false,
       didFinishTypingAnimation: false,
       shouldRoundCorners: true,
@@ -79,8 +82,8 @@ export default class App extends React.Component {
       showSnackbarMessage: false,
       snackbarMessage: "Error",
       snackbarSeverity: "error",
-      maxImageSize: 3500000,
-      maxImageSizeDisplay: "3 MB",
+      maxImageSize: 10000000,
+      maxImageSizeDisplay: "10 MB",
       hasCustomImage: false,
       customImageResult: null,
       customImage: null,
@@ -92,12 +95,10 @@ export default class App extends React.Component {
   }
 
   render() {
-    var textFieldStyle = {
-      underline:{'&:after': {border: '2px solid red'  }}
-    };
 
     const handleTitleTextFieldChange = (title) => {
-      this.setState({appTitle: title});
+      appToGenerate.name = title
+      this.setState({state: this.state})
     }
 
     const handleUrlKeyPressed = (event) => {
@@ -107,14 +108,14 @@ export default class App extends React.Component {
     }
 
     const handleGoButtonClick = (url) => {
-      savedUrl = url;
-      this.setState({urlTextField: url, isCurrentlyFetching: true});
+      appToGenerate.link = url;
+      this.setState({isCurrentlyFetching: true});
       didAttempt.fetchWebsiteData = false;
       JSON_RETRIEVE("UNIQUE_ID");
       waitUntilTrue("fetchWebsiteData", () => {
         this.setState({isCurrentlyFetching: false});
-        if (didFetchWebsiteData) {
-          this.setState({state: this.state,didContinueToGenerate: true, appTitle: titleValue});
+        if (wasSuccess.fetchWebsiteData) {
+          this.setState({state: this.state, didContinueToGenerate: true});
         } else {
           this.setState({showSnackbarMessage: true, snackbarMessage: "An unexpected error occurred.", snackbarSeverity: "error"});
         }
@@ -130,11 +131,10 @@ export default class App extends React.Component {
     }
 
     const handleCustomImageButtonClick = (event) => {
-      //IMPORTANT TODO: Change code so that image is only uploaded when generate button is clicked
       if (event.target.files.length > 0) {
         didAttempt.uploadImage = false;
         console.log("Found file with size " + event.target.files[0].size);
-        //Should display 3MB limit to user, but allow 15% tolerance
+        //Should display 10 MB limit to user, but allow 15% tolerance
         if (event.target.files[0].size < this.state.maxImageSize) {
           var reader = new FileReader();
           reader.onload = (readerEvent) => {
@@ -147,38 +147,38 @@ export default class App extends React.Component {
       }
     }
 
+    const handleRoundCornersSwitchChange = (event) => {
+      appToGenerate.rounded = event.target.checked;
+      this.setState({state: this.state});
+    }
+
     const handleGenerateButtonClick = () => {
-      if (didGenerateApp) {
+
+      if (wasSuccess.generateApp) {
         this.setState({showSnackbarMessage: true, snackbarMessage: "An app was already generated.", snackbarSeverity: "warning"});
-      } else if (!didGenerateApp && this.state.isCurrentlyFetching) {
+      } else if (!wasSuccess.generateApp && this.state.isCurrentlyFetching) {
         this.setState({showSnackbarMessage: true, snackbarMessage: "An app is currently generating.", snackbarSeverity: "warning"});
       } else{
+
         //No app has been generated yet, so do it now
         didAttempt.generateApp = false;
         this.setState({isCurrentlyFetching: true});
         var customImage = this.state.customImage;
 
+        //Upload image file directly if one was given, otherwise upload image from the specified URL
         if (this.state.hasCustomImage) {
-          JSON_RETRIEVE("SAVE_IMAGE",{id: uniqueID, image: this.state.customImage});
+          JSON_RETRIEVE("SAVE_IMAGE",{id: appToGenerate.id, image: this.state.customImage});
         } else {
-          JSON_RETRIEVE("SAVE_IMAGE_URL",{id: uniqueID, image_url: imagePath});
+          JSON_RETRIEVE("SAVE_IMAGE_URL",{id: appToGenerate.id, image_url: imageUrlToUpload});
         }
 
+        //After image is uploaded, generate the app
         waitUntilTrue("uploadImage", () => {
-          //this.setState({showSnackbarMessage: true, snackbarMessage: "Successfully uploaded image!", snackbarSeverity: "success"});
-          if (didUploadImage) {
-            //Image successfully uploaded
-            JSON_RETRIEVE("GENERATE_APP",{
-              id: uniqueID,
-              link: savedUrl,
-              name: this.state.appTitle,
-              rounded: this.state.shouldRoundCorners ? true : false
-            });
+          if (wasSuccess.uploadImage) {
+            JSON_RETRIEVE("GENERATE_APP", appToGenerate);
             waitUntilTrue("generateApp", () =>{
               this.setState({isCurrentlyFetching: false});
-              if (didGenerateApp) {
-                //this.setState({showSnackbarMessage: true, snackbarMessage: "Generated app WITH custom icon", snackbarSeverity: "success"});
-              } else{
+              if (!wasSuccess.generateApp) {
                 this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
               }
             });
@@ -188,10 +188,6 @@ export default class App extends React.Component {
           }
         });
       }
-    }
-
-    const handleRoundCornersSwitchChange = (event) => {
-      this.setState({shouldRoundCorners: event.target.checked});
     }
 
     return (
@@ -215,9 +211,9 @@ export default class App extends React.Component {
           didContinueToGenerate={this.state.didContinueToGenerate}
           isCurrentlyFetching={this.state.isCurrentlyFetching}/>
         <AppConfigurationView
-          appTitle={this.state.appTitle}
+          appTitle={appToGenerate.name}
           didContinueToGenerate={this.state.didContinueToGenerate}
-          shouldRoundCorners={this.state.shouldRoundCorners}
+          shouldRoundCorners={appToGenerate.rounded}
           hasCustomImage={this.state.hasCustomImage}
           customImageResult={this.state.customImageResult}
           onAppTitleChange={handleTitleTextFieldChange}
@@ -272,7 +268,7 @@ class WebsiteURLView extends React.Component {
     return (
       <div style={{flexGrow: 1,display:"flex",maxHeight:96}}>
         <div style={{flexGrow: 1}}></div>
-        <div style={{flexGrow: 2, paddingTop: (this.props.didFinishTypingAnimation ? 0 : 64),opacity: (didGenerateApp ? 1 : 0),animation: (this.props.didFinishTypingAnimation ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "fadeToVisible 1s forwards 0.5s") : "")}}>
+        <div style={{flexGrow: 2, paddingTop: (this.props.didFinishTypingAnimation ? 0 : 64),opacity: (wasSuccess.generateApp ? 1 : 0),animation: (this.props.didFinishTypingAnimation ? (wasSuccess.generateApp ? "fadeToHidden 1s forwards 0.5s" : "fadeToVisible 1s forwards 0.5s") : "")}}>
           <TextField inputProps={{autoComplete:"off",type:"url"}} autoComplete="off" onKeyDown={handleUrlKeyPressed} variant="outlined" disabled={this.props.didContinueToGenerate} onChange={handleUrlTextFieldChange} style={{color:"#ffffff",width:"100%"}} value={this.state.urlTextField}></TextField>
           <IconButton onClick={handleGoButtonClick} variant="outlined" color="background" style={{flexGrow: 1,width:64,height:64,marginLeft:-64,position:"absolute", display: (this.props.didContinueToGenerate || this.props.isCurrentlyFetching ? "none" : "inline-flex")}}>
             <Icon style={{fontSize: 24, color:"#ffffff !important"}}>arrow_forward</Icon>
@@ -300,7 +296,7 @@ class AppConfigurationView extends React.Component {
 
     const handleRoundCornersSwitchChange = (event) => {
       if (this.props.onRoundCornersToggle != null) {
-        this.props.onRoundCornersToggle();
+        this.props.onRoundCornersToggle(event);
       }
     }
 
@@ -317,14 +313,14 @@ class AppConfigurationView extends React.Component {
     }
 
     return (
-      <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.props.didContinueToGenerate ? (didGenerateApp ? "fadeToHidden 1s forwards 0.5s" : "flexToFour 1s") : ""),flex: (this.props.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.props.didContinueToGenerate ? "visible" : "hidden")}}>
+      <div style={{display:"flex",flexFlow:"column",animation:"flexTo4 3s",animation: (this.props.didContinueToGenerate ? (wasSuccess.generateApp ? "fadeToHidden 1s forwards 0.5s" : "flexToFour 1s") : ""),flex: (this.props.didContinueToGenerate ? "4" : "2") + " 0 auto",visibility: (this.props.didContinueToGenerate ? "visible" : "hidden")}}>
         <div style={{display: "flex", flexGrow: 1}}>
           <div style={{flexGrow: 1}}></div>
             <div style={{flexGrow: 2,display:"flex",flexFlow:"column"}}>
             <Paper style={{display:"flex",flexGrow: 0,height:"fit-content",backgroundColor:"#222225 !important"}}>
               <div style={{flexGrow: 2,marginRight:16,display:"flex"}}>
                 <div style={{flexGrow: 1,width:0,height:"fit-content",marginRight:16}}>
-                  <img style={{borderRadius: (this.props.shouldRoundCorners ? "20%" : "0%"),float:"left",maxWidth:"100%"}} src={this.props.hasCustomImage ? this.props.customImageResult : imagePath}/>
+                  <img style={{borderRadius: (this.props.shouldRoundCorners ? "20%" : "0%"),float:"left",maxWidth:"100%"}} src={this.props.hasCustomImage ? this.props.customImageResult : imageUrlToUpload}/>
                 </div>
               </div>
               <div style={{flexGrow: 2}}>
@@ -369,7 +365,7 @@ class AppGeneratedView extends React.Component {
     }
 
     return (
-      <div style={{visibility: "hidden",height:0.01,display: (didGenerateApp ? "flex" : "none"),animation: (didGenerateApp ? "displayAndFadeToVisible 1s forwards 1.5s" : "")}}>
+      <div style={{visibility: "hidden",height:0.01,display: (wasSuccess.generateApp ? "flex" : "none"),animation: (wasSuccess.generateApp ? "displayAndFadeToVisible 1s forwards 1.5s" : "")}}>
         <div style={{flexGrow: 1}}></div>
         <Paper style={{flexGrow: 4,margin: 16,padding:8, color: "#ffffff"}}>
           <p style={{width:"100%",textAlign:"center",fontSize:20,fontWeight:500}}>Your web app was created successfully!</p>
@@ -475,30 +471,29 @@ export function REQUEST_LISTENER(type, success, data) {
 
   if (type == "UNIQUE_ID") {
     if (data.id != null) {
-      uniqueID = data.id;
+      appToGenerate.id = data.id;
     }
-    JSON_RETRIEVE("WEBSITE_METADATA",{url: savedUrl});
+    JSON_RETRIEVE("WEBSITE_METADATA",{url: appToGenerate.link});
   } else if (type == "WEBSITE_METADATA") {
     if (success) {
       if (data.icon_url != null) {
-        imagePath = data.icon_url;
+        imageUrlToUpload = data.icon_url;
       } else{
-        imagePath = "https://webappify.noahsadir.io/static/webappify_default.png";
+        imageUrlToUpload = "https://webappify.noahsadir.io/static/webappify_default.png";
       }
 
       if (data.title != null) {
-        titleValue = data.title;
+        appToGenerate.title = data.title;
       } else{
-        titleValue = "Web App";
+        appToGenerate.title = "Web App";
       }
     }
-    didFetchWebsiteData = true;
+    wasSuccess.fetchWebsiteData = true;
     didAttempt.fetchWebsiteData = true;
   } else if (type == "SAVE_IMAGE" || type == "SAVE_IMAGE_URL") {
     if (success) {
       if (data.success == true) {
-        //imagePath = "../api/tmp/" + uniqueID + ".png";
-        didUploadImage = true;
+        wasSuccess.uploadImage = true;
       }
     }
     didAttempt.uploadImage = true;
@@ -506,11 +501,11 @@ export function REQUEST_LISTENER(type, success, data) {
     if (success) {
       if (data.success == true) {
         generatedAppLink = data.link;
-        didGenerateApp = true;
+        wasSuccess.generateApp = true;
       }
     } else if (developmentMode) {
       generatedAppLink = "about:blank"
-      didGenerateApp = true;
+      wasSuccess.generateApp = true;
     }
     didAttempt.generateApp = true;
   }
