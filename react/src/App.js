@@ -1,7 +1,8 @@
-/* ------------------- *
- *       App.js        *
- * ------------------- */
-
+/*-------------------------------- *
+* App.js                           *
+* -------------------------------- *
+* Central point of the app.        *
+* -------------------------------- */
 import React from "react";
 import './App.css';
 
@@ -66,17 +67,38 @@ var appToGenerate = {
 var imageUrlToUpload = "https://webappify.noahsadir.io/static/webappify_default.png";
 var generatedAppLink = "https://www.example.com";
 
-/**
+/*
  * The React Component which primarily controls the UI and
  * handles user input and interaction.
  */
 export default class App extends React.Component {
   constructor(props) {
     super(props);
+    /*
+    timing: {
+      didContinueToGenerate: false,
+      didFinishTypingAnimation: false,
+      isCurrentlyFetching: false,
+    },
+    snackbar: {
+      message: "Error",
+      severity: "error",
+      visible: false,
+    },
+    customImage: {
+      maxSize: 10000000,
+      maxSizeDisplay: "10 MB",
+      exists: false,
+      result: null,
+      image: null,
+    },
+    instructionsDialog: {
+      open: false,
+    },
+    */
     this.state = {
       didContinueToGenerate: false,
       didFinishTypingAnimation: false,
-      shouldRoundCorners: true,
       isCurrentlyFetching: false,
       fetchMessage: "Loading",
       showSnackbarMessage: false,
@@ -88,25 +110,25 @@ export default class App extends React.Component {
       customImageResult: null,
       customImage: null,
       instructionsDialogOpen: false,
-      instructionsDeviceType: "chrome",
     }
-    //Note: If modifying maxImageSize, make sure to adjust server-side limit
-    //      in save_image.php
   }
 
   render() {
 
+    //Update web app title
     const handleTitleTextFieldChange = (title) => {
       appToGenerate.name = title
       this.setState({state: this.state})
     }
 
+    //If user hits enter on URL textfield, treat it as if the "Go" button was clicked
     const handleUrlKeyPressed = (event) => {
       if(event.key === 'Enter') {
         handleGoButtonClick(event);
       }
     }
 
+    //User hit arrow or pressed enter on textfield; try to autofill some to make the web app
     const handleGoButtonClick = (url) => {
       appToGenerate.link = url;
       this.setState({isCurrentlyFetching: true});
@@ -122,15 +144,19 @@ export default class App extends React.Component {
       });
     }
 
+    //Open instructions dialog
     const handleInstructionsButtonClick = (event) => {
       this.setState({instructionsDialogOpen: true});
     }
 
+    //Close instructions dialog
     const handleInstructionsDialogClose = (event) => {
       this.setState({instructionsDialogOpen: false});
     }
 
+    //Upload custom image
     const handleCustomImageButtonClick = (event) => {
+      //See if any files were uploaded
       if (event.target.files.length > 0) {
         didAttempt.uploadImage = false;
         console.log("Found file with size " + event.target.files[0].size);
@@ -138,22 +164,27 @@ export default class App extends React.Component {
         if (event.target.files[0].size < this.state.maxImageSize) {
           var reader = new FileReader();
           reader.onload = (readerEvent) => {
+            //Save data for uploaded image
             this.setState({hasCustomImage: true, customImageResult: readerEvent.target.result, customImage: event.target.files[0], showSnackbarMessage: true, snackbarMessage: "Added custom image.", snackbarSeverity: "success"});
           };
           reader.readAsDataURL(event.target.files[0]);
         } else{
+          //Notify user that image is too large
           this.setState({showSnackbarMessage: true, snackbarMessage: "Image must be " + this.state.maxImageSizeDisplay + " or less.", snackbarSeverity: "error"});
         }
       }
     }
 
+    //Toggle setting for whether icon corners should be rounded
     const handleRoundCornersSwitchChange = (event) => {
       appToGenerate.rounded = event.target.checked;
       this.setState({state: this.state});
     }
 
+    //Upload desired image and generate the web app
     const handleGenerateButtonClick = () => {
 
+      //Make sure app generation request wasn't already made (prevents duplicate requests)
       if (wasSuccess.generateApp) {
         this.setState({showSnackbarMessage: true, snackbarMessage: "An app was already generated.", snackbarSeverity: "warning"});
       } else if (!wasSuccess.generateApp && this.state.isCurrentlyFetching) {
@@ -163,7 +194,6 @@ export default class App extends React.Component {
         //No app has been generated yet, so do it now
         didAttempt.generateApp = false;
         this.setState({isCurrentlyFetching: true});
-        var customImage = this.state.customImage;
 
         //Upload image file directly if one was given, otherwise upload image from the specified URL
         if (this.state.hasCustomImage) {
@@ -178,11 +208,15 @@ export default class App extends React.Component {
             JSON_RETRIEVE("GENERATE_APP", appToGenerate);
             waitUntilTrue("generateApp", () =>{
               this.setState({isCurrentlyFetching: false});
+
+              //Couldn't generate app; notify user
               if (!wasSuccess.generateApp) {
                 this.setState({showSnackbarMessage: true, snackbarMessage: "Error generating app.", snackbarSeverity: "error"});
               }
             });
           } else{
+
+            //Can't upload image; don't generate app
             this.setState({isCurrentlyFetching: false});
             this.setState({showSnackbarMessage: true, snackbarMessage: "Error uploading image.", snackbarSeverity: "error"});
           }
@@ -211,7 +245,6 @@ export default class App extends React.Component {
           didContinueToGenerate={this.state.didContinueToGenerate}
           isCurrentlyFetching={this.state.isCurrentlyFetching}/>
         <AppConfigurationView
-          appTitle={appToGenerate.name}
           didContinueToGenerate={this.state.didContinueToGenerate}
           shouldRoundCorners={appToGenerate.rounded}
           hasCustomImage={this.state.hasCustomImage}
@@ -239,6 +272,9 @@ export default class App extends React.Component {
   }
 }
 
+/*
+ * Container for website URL textfield.
+ */
 class WebsiteURLView extends React.Component {
   constructor(props) {
     super(props);
@@ -281,6 +317,9 @@ class WebsiteURLView extends React.Component {
   }
 }
 
+/*
+ * Container for adjusting web app configuration.
+ */
 class AppConfigurationView extends React.Component {
   constructor(props) {
     super(props);
@@ -326,7 +365,7 @@ class AppConfigurationView extends React.Component {
               <div style={{flexGrow: 2}}>
                 <div style={{display:"flex"}}>
                   <div style={{flexGrow: 1}}></div>
-                  <TextField onChange={handleTitleTextFieldChange} style={{flexGrow: 2,color:"#ffffff",width:"100%"}} value={this.props.appTitle}></TextField>
+                  <TextField onChange={handleTitleTextFieldChange} style={{flexGrow: 2,color:"#ffffff",width:"100%"}} value={appToGenerate.name}></TextField>
                   <div style={{flexGrow: 1}}></div>
                 </div>
                 <FormControlLabel
@@ -344,7 +383,6 @@ class AppConfigurationView extends React.Component {
             </Paper>
             <div style={{flexGrow: 1}}></div>
           </div>
-
           <div style={{flexGrow: 1}}></div>
         </div>
       </div>
@@ -352,12 +390,16 @@ class AppConfigurationView extends React.Component {
   }
 }
 
+/*
+ * View which displays after web app is created successfully.
+ */
 class AppGeneratedView extends React.Component {
   constructor(props) {
     super(props);
   }
 
   render() {
+
     const handleInstructionsButtonClick = (event) => {
         if (this.props.onInstructionsButtonClick != null) {
           this.props.onInstructionsButtonClick(event);
@@ -383,6 +425,9 @@ class AppGeneratedView extends React.Component {
   }
 }
 
+/*
+ * Dialog for web app installation instructions.
+ */
 class InstallInstructionsDialog extends React.Component {
   constructor(props) {
     super(props);
@@ -444,8 +489,9 @@ class InstallInstructionsDialog extends React.Component {
  * Performs a scan every 0.5 seconds until desired bool is true.
  * Once the bool is true, the callback funtion is called and the scan stops.
  *
- * @param requestType the string name of the boolean to scan for in the didAttempt object
- * @param callback the function to call when boolIsTrue becomes true
+ * PARAMETERS:
+ * requestType - the string name of the boolean to scan for in the didAttempt object
+ * callback - the function to call when boolIsTrue becomes true
  */
 function waitUntilTrue(requestType, callback) {
   var requestTimeout = window.setInterval(() => {
@@ -461,9 +507,10 @@ function waitUntilTrue(requestType, callback) {
  * sent from Requests responds back. Primarily for configuring variables
  * and updating UI based on data returned.
  *
- * @param type a string representing the type of API call
- * @param success a boolean indicating whether the call was successful
- * @param data the data returned by the API; typically a JSON object or plain string
+ * PARAMETERS:
+ * type - a string representing the type of API call
+ * success - a boolean indicating whether the call was successful
+ * data - the data returned by the API; typically a JSON object or plain string
 */
 export function REQUEST_LISTENER(type, success, data) {
   console.log("Request " + type + " was " + (success ? "successful" : "unsuccessful") + " and returned data:");
@@ -483,9 +530,9 @@ export function REQUEST_LISTENER(type, success, data) {
       }
 
       if (data.title != null) {
-        appToGenerate.title = data.title;
+        appToGenerate.name = data.title;
       } else{
-        appToGenerate.title = "Web App";
+        appToGenerate.name = "Web App";
       }
     }
     wasSuccess.fetchWebsiteData = true;
