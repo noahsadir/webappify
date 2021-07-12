@@ -3,7 +3,6 @@ from django.http import HttpResponse
 from django.core.files import File
 from apps.models import WebApp
 from urllib.request import urlopen
-import binascii
 import os
 
 appImage = ''
