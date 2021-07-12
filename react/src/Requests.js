@@ -1,15 +1,18 @@
-/*-------------------------------- *
-* Requests.js                      *
-* -------------------------------- *
-* Helper class which fetches data  *
-* from various souces and prepares *
-* it for processing.               *
-* -------------------------------- */
+/* -------------------------------- *
+ * Requests.js                      *
+ * -------------------------------- *
+ * Helper class which fetches data  *
+ * from various souces and prepares *
+ * it for processing.               *
+ * -------------------------------- */
 
 import {REQUEST_LISTENER} from './App';
 var testMode = false;
 
-export function makeAPICall(jobID, args, callback) {
+/*
+ * API Call function with built-in callback
+ */
+export function jsonAPICall(jobID, args, callback) {
   //Make request to API for JSON
   var urlValue = "";
   var fetchDetails = {};
@@ -119,7 +122,6 @@ export function JSON_RETRIEVE(jobID, args){
         body: formData,
       };
       urlValue = "../api/generate_app"
-      //urlValue = "../api/generate_app.php?" + "id=" + args.id + "&link=" + args.link + "&name=" + args.name + "&rounded=" + args.rounded + "&siteimg=" + args.siteimg;
     }
 
     console.log("fetching data from " + urlValue);

@@ -1,8 +1,9 @@
-/*-------------------------------- *
-* App.js                           *
-* -------------------------------- *
-* Central point of the app.        *
-* -------------------------------- */
+/* -------------------------------- *
+ * App.js                           *
+ * -------------------------------- *
+ * Central point of the app.        *
+ * -------------------------------- */
+
 import React from "react";
 import './App.css';
 
@@ -45,18 +46,21 @@ const ExpandingTabs = withStyles((theme) => ({
 
 var developmentMode = false;
 
+//Indicates whether a certain action was attempted, primarily for callback purposes.
 var didAttempt = {
   fetchWebsiteData: false,
   uploadImage: false,
   generateApp: false,
 };
 
+//Indicates whether a certain action was successful
 var wasSuccess = {
   fetchWebsiteData: false,
   uploadImage: false,
   generateApp: false,
 }
 
+//Contains the state of the web app to generate.
 var appToGenerate = {
   id: null,
   name: "Web App",
@@ -65,7 +69,7 @@ var appToGenerate = {
 }
 
 var imageUrlToUpload = "https://webappify.noahsadir.io/static/webappify_default.png";
-var generatedAppLink = "https://www.example.com";
+var generatedAppLink = "https://webappify.noahsadir.io";
 
 /*
  * The React Component which primarily controls the UI and
@@ -74,7 +78,9 @@ var generatedAppLink = "https://www.example.com";
 export default class App extends React.Component {
   constructor(props) {
     super(props);
+
     /*
+    //Possible new layout for state variables
     timing: {
       didContinueToGenerate: false,
       didFinishTypingAnimation: false,
@@ -96,6 +102,7 @@ export default class App extends React.Component {
       open: false,
     },
     */
+
     this.state = {
       didContinueToGenerate: false,
       didFinishTypingAnimation: false,
