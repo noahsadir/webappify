@@ -1,5 +1,5 @@
 """
-WSGI config for webappify project.
+WSGI config for django_webappify project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'webappify.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_webappify.settings')
 
 application = get_wsgi_application()
