@@ -2,7 +2,7 @@
 
 Turn any website into a standalone web app!
 
-## How to use
+## Usage
 
 - Visit [webappify.noahsadir.io](https://webappify.noahsadir.io). Alternatively, you can build and host it yourself.
 - Enter the URL of the desired website and click enter or the arrow (->) button.
@@ -111,7 +111,7 @@ A 32x32 ICO file which serves as the website favicon.
 
 The server configuration for this is quite complicated.
 
-In order for Django and React to work simultaneously, Apache needs to be configured so that Django is accessible through the domain root and the React app is accessible through a specific subdirectory, such as ```home/```.
+In order for Django and React to work simultaneously, Apache needs to be configured so that Django is accessible through the domain root and the React app is accessible through a specific subdirectory.
 
 #### Apache
 
@@ -127,8 +127,9 @@ The Apache configuration for ```webappify.noahsadir.io``` has the following prop
 
 Django needs the following libraries installed, preferably in a virtual environment:
 ```
-pillow
 bs4
+pillow
+favicon
 requests
 ```
 
@@ -143,8 +144,13 @@ react-typing-animation
 
 #### Automated Setup
 
-I wrote a script does most of the heavy lifting. Please note that it assumes that everything (Node, Yarn, Python, Apache, etc.) is installed and configured properly.
+The following script does most of the heavy lifting. Please note that it assumes that everything (Node, Yarn, Python, Apache, etc.) is installed and configured properly.
 ```
 wget https://noahsadir.io/resources/scripts/webappify-fresh-install.sh
 ```
 After inspecting, run this script in the directory where you would like to keep all of the project-related files, perhaps the root of your site folder.
+
+Once the environment is properly set up, you can push new updates using this script:
+```
+wget https://noahsadir.io/resources/scripts/webappify-update.sh
+```
