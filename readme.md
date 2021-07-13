@@ -107,19 +107,23 @@ A 1024x1024 PNG file which serves as the icon for Apple devices.
 
 A 32x32 ICO file which serves as the website favicon.
 
-## Notes
+## Setting up the Environment
 
 The server configuration for this is quite complicated.
 
 In order for Django and React to work simultaneously, Apache needs to be configured so that Django is accessible through the domain root and the React app is accessible through a specific subdirectory, such as ```home/```.
 
+#### Apache
+
 The Apache configuration for ```webappify.noahsadir.io``` has the following properties:
 - It's set up as a virtual host
-- The document root points to ```django_webappify```
-- The WSGIScriptAlias points to ```django_webappify\django_webappify\wsgi.py```
-- The WSGIDaemonProcess points to the Python virtual environment at ```django_env```
-- An alias for subdirectory ```home/``` points to the React app at ```react_webappify/build/```
-- An alias for subdirectory ```static/``` points to the static Django files at ```django_webappify/static```
+- The document root points to ```django_webappify/```
+- The WSGIScriptAlias points to ```django_webappify/django_webappify/wsgi.py```
+- The WSGIDaemonProcess points to the Python virtual environment at ```django_env/```
+- An alias for subdirectory ```/home/``` points to the React app at ```react_webappify/build/```
+- An alias for subdirectory ```/static/``` points to the static Django files at ```django_webappify/static/```
+
+#### Django
 
 Django needs the following libraries installed, preferably in a virtual environment:
 ```
@@ -128,6 +132,8 @@ bs4
 requests
 ```
 
+#### React
+
 React needs the following packages installed:
 ```
 react-typing-animation
@@ -135,7 +141,10 @@ react-typing-animation
 @material-ui/lab
 ```
 
+#### Automated Setup
+
 I wrote a script does most of the heavy lifting. Please note that it assumes that everything (Node, Yarn, Python, Apache, etc.) is installed and configured properly.
 ```
 wget https://noahsadir.io/resources/scripts/webappify-fresh-install.sh
 ```
+After inspecting, run this script in the directory where you would like to keep all of the project-related files, perhaps the root of your site folder.
