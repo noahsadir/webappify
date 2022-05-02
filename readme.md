@@ -145,6 +145,8 @@ react-typing-animation
 #### Automated Setup
 
 The following script does most of the heavy lifting. Please note that it assumes that everything (Node, Yarn, Python, Apache, etc.) is installed and configured properly.
+
+*Tested Configuration:* Node v16.15.0, Python 3.8.10, NPM 8.5.5
 ```
 wget https://noahsadir.io/resources/scripts/webappify-fresh-install.sh
 ```

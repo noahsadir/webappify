@@ -94,7 +94,11 @@ def websiteMetadata(request):
     return JsonResponse({'success': False, 'message': 'Invalid parameters.'})
 
 def availableApps(request):
-    return JsonResponse({'success': False, 'message': 'It works, but not really.'})
+    objects = WebApp.objects.all()
+    appData = []
+    for object in objects:
+        appData.append(object.data())
+    return JsonResponse({'success': False, 'apps': appData})
 
 # Create a database entry for the app and generate icon set
 def saveAndGenerateWebApp(cleanedData):
